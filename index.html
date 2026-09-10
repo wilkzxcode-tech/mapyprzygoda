@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brajanowo - Serwer Minecraft</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+
+  body {
+    font-family:'VT323', monospace;
+    font-size:22px;
+    color:#e8e8d8;
+    background:#3a2a1a;
+    overflow-x:hidden;
+    image-rendering: pixelated;
+  }
+
+  /* ---------- animated sky background ---------- */
+  .sky {
+    position:fixed;
+    inset:0;
+    z-index:-3;
+    background: linear-gradient(180deg,#4EA6E8 0%, #7EC6F0 45%, #B9E4FB 75%, #6b9c4a 76%, #4a7a34 100%);
+  }
+  .sun {
+    position:fixed;
+    top:40px; right:60px;
+    width:70px; height:70px;
+    background:#FFEE58;
+    box-shadow: 0 0 0 8px rgba(255,238,88,.35);
+    z-index:-3;
+    animation: pulse-sun 3s infinite steps(4);
+  }
+  @keyframes pulse-sun {
+    0%,100% { box-shadow: 0 0 0 8px rgba(255,238,88,.35); }
+    50% { box-shadow: 0 0 0 16px rgba(255,238,88,.2); }
+  }
+  .cloud {
+    position:fixed;
+    z-index:-2;
+    background:#ffffff;
+    opacity:.9;
+    box-shadow:
+      40px 0 0 0 #fff,
+      -40px 10px 0 0 #fff,
+      20px -15px 0 0 #fff;
+  }
+  .cloud1 { top:80px; width:60px; height:30px; animation: drift 55s linear infinite; }
+  .cloud2 { top:160px; width:50px; height:26px; animation: drift 80s linear infinite; animation-delay:-20s; opacity:.75;}
+  .cloud3 { top:40px; width:40px; height:22px; animation: drift 40s linear infinite; animation-delay:-10s; opacity:.6;}
+  @keyframes drift {
+    from { transform:translateX(-200px); }
+    to   { transform:translateX(110vw); }
+  }
+
+  /* floating pixel particles (like enchant sparkles) */
+  .particle {
+    position:fixed;
+    width:4px; height:4px;
+    background:#FFEE58;
+    z-index:-1;
+    animation: floatup linear infinite;
+    opacity:.8;
+  }
+  @keyframes floatup {
+    0% { transform:translateY(0) translateX(0); opacity:0; }
+    10% { opacity:.9; }
+    100% { transform:translateY(-100vh) translateX(20px); opacity:0; }
+  }
+
+  /* ---------- pixel border helper (minecraft panel look) ---------- */
+  .pixel-panel {
+    background:#8a8a8a;
+    border-top:4px solid #d4d4d4;
+    border-left:4px solid #d4d4d4;
+    border-right:4px solid #3f3f3f;
+    border-bottom:4px solid #3f3f3f;
+    box-shadow: 0 0 0 4px #1a1a1a;
+  }
+
+  /* ---------- header ---------- */
+  header {
+    position:relative;
+    text-align:center;
+    padding:70px 20px 50px;
+    background: repeating-linear-gradient(0deg,#6b4a2e 0 8px, #5c3f28 8px 16px);
+    border-bottom:8px solid #1a1a1a;
+  }
+  header::before, header::after {
+    content:"";
+    position:absolute;
+    left:0; right:0;
+    height:14px;
+    background: repeating-linear-gradient(90deg,#7a9e4a 0 14px, #6b8f3e 14px 28px, #58762f 28px 42px);
+  }
+  header::before { top:0; }
+  header::after { bottom:0; }
+
+  .logo-title {
+    font-family:'Press Start 2P', monospace;
+    font-size:44px;
+    color:#F4C542;
+    text-shadow: 4px 4px 0 #3f2a12, 8px 8px 0 rgba(0,0,0,.4);
+    letter-spacing:2px;
+    animation: title-bounce 2.5s ease-in-out infinite;
+  }
+  @keyframes title-bounce {
+    0%,100% { transform:translateY(0); }
+    50% { transform:translateY(-8px); }
+  }
+  .logo-sub {
+    margin-top:22px;
+    font-size:26px;
+    color:#c9e4b8;
+  }
+  .ip-box {
+    display:inline-block;
+    margin-top:26px;
+    padding:12px 26px;
+    font-family:'Press Start 2P', monospace;
+    font-size:14px;
+    color:#fff;
+    background:#2a2a2a;
+    border-top:3px solid #555;
+    border-left:3px solid #555;
+    border-right:3px solid #000;
+    border-bottom:3px solid #000;
+    cursor:pointer;
+    transition: transform .1s;
+  }
+  .ip-box:hover { transform:scale(1.05); background:#3a3a3a; }
+  .ip-box:active { transform:scale(.97); }
+
+  /* achievement toast */
+  .achievement {
+    position:fixed;
+    top:20px; left:50%;
+    transform:translate(-50%,-120px);
+    background:#1a1a1a;
+    border:3px solid #444;
+    padding:12px 20px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    z-index:999;
+    transition: transform .5s cubic-bezier(.2,1.4,.4,1);
+  }
+  .achievement.show { transform:translate(-50%,0); }
+  .achievement .icon {
+    width:32px; height:32px;
+    background:#F4C542;
+    border:2px solid #b8901f;
+    flex-shrink:0;
+    animation: spin-icon 4s linear infinite;
+  }
+  @keyframes spin-icon { 0%,100%{transform:rotateY(0);} 50%{transform:rotateY(180deg);} }
+  .achievement .txt-small { font-family:'Press Start 2P'; font-size:10px; color:#F4C542; }
+  .achievement .txt-big { font-family:'VT323'; font-size:20px; color:#fff; }
+
+  /* ---------- nav tabs ---------- */
+  nav {
+    position:sticky; top:0; z-index:100;
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    background:#2b2b2b;
+    padding:10px;
+    border-bottom:6px solid #1a1a1a;
+    flex-wrap:wrap;
+  }
+  .tab-btn {
+    font-family:'Press Start 2P', monospace;
+    font-size:13px;
+    color:#e8e8d8;
+    background:#5a5a5a;
+    border-top:3px solid #8a8a8a;
+    border-left:3px solid #8a8a8a;
+    border-right:3px solid #2a2a2a;
+    border-bottom:3px solid #2a2a2a;
+    padding:14px 20px;
+    cursor:pointer;
+    transition: background .15s, transform .1s;
+    position:relative;
+  }
+  .tab-btn:hover { background:#6f6f6f; transform:translateY(-2px); }
+  .tab-btn.active {
+    background:#7a9e4a;
+    border-top-color:#a3c97a;
+    border-right-color:#3f5326;
+    border-bottom-color:#3f5326;
+    color:#fff;
+  }
+
+  /* ---------- sections ---------- */
+  main { max-width:1000px; margin:0 auto; padding:50px 20px 80px; position:relative; }
+  section { display:none; animation: fade-in .4s ease; }
+  section.active { display:block; }
+  @keyframes fade-in { from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
+
+  h2.section-title {
+    font-family:'Press Start 2P', monospace;
+    font-size:26px;
+    color:#F4C542;
+    text-align:center;
+    margin-bottom:36px;
+    text-shadow:3px 3px 0 #1a1a1a;
+  }
+
+  .info-card {
+    padding:28px;
+    margin-bottom:26px;
+    font-size:22px;
+    line-height:1.6;
+  }
+  .info-card p { margin-bottom:12px; }
+
+  .stats-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:18px;
+    margin-top:30px;
+  }
+  .stat-block {
+    padding:20px;
+    text-align:center;
+  }
+  .stat-block .num {
+    font-family:'Press Start 2P';
+    font-size:26px;
+    color:#7a9e4a;
+    display:block;
+    margin-bottom:10px;
+  }
+
+  /* grass block decorative divider */
+  .grass-strip {
+    height:22px;
+    margin:34px 0;
+    background: repeating-linear-gradient(90deg,#7a9e4a 0 22px, #6b8f3e 22px 44px);
+    border-top:4px solid #a3c97a;
+    border-bottom:4px solid #4a3018;
+    box-shadow:0 4px 0 0 #4a3018;
+  }
+
+  /* ---------- PvP leaderboard ---------- */
+  .leaderboard { display:flex; flex-direction:column; gap:16px; }
+  .lb-row {
+    display:flex;
+    align-items:center;
+    gap:20px;
+    padding:16px 22px;
+    background:#4a4a4a;
+    border-top:3px solid #6f6f6f;
+    border-left:3px solid #6f6f6f;
+    border-right:3px solid #2a2a2a;
+    border-bottom:3px solid #2a2a2a;
+    position:relative;
+    overflow:hidden;
+    transition: transform .15s;
+  }
+  .lb-row:hover { transform:translateX(6px); }
+  .lb-rank {
+    font-family:'Press Start 2P';
+    font-size:22px;
+    width:50px;
+    text-align:center;
+    flex-shrink:0;
+  }
+  .lb-row.rank1 { background:#5c4a1a; border-color:#F4C542 #6b4a10 #6b4a10 #F4C542; }
+  .lb-row.rank1 .lb-rank { color:#F4C542; text-shadow:0 0 8px rgba(244,197,66,.8); }
+  .lb-row.rank2 .lb-rank { color:#c9c9c9; }
+
+  .lb-avatar {
+    width:44px; height:44px;
+    background:linear-gradient(135deg,#7a9e4a,#4a6a2a);
+    border:2px solid #1a1a1a;
+    flex-shrink:0;
+    position:relative;
+  }
+  .lb-avatar::after {
+    content:"";
+    position:absolute; inset:8px;
+    background:#3a2a1a;
+  }
+  .lb-name { font-size:26px; flex-grow:1; }
+  .lb-badge {
+    font-family:'Press Start 2P';
+    font-size:10px;
+    padding:6px 10px;
+    background:#7a2a2a;
+    color:#fff;
+    flex-shrink:0;
+  }
+  .rank1 .lb-badge { background:#a8841f; }
+
+  .sparkle {
+    position:absolute;
+    width:6px; height:6px;
+    background:#fff;
+    animation: sparkle-anim 1.6s infinite ease-in-out;
+  }
+  @keyframes sparkle-anim {
+    0%,100% { opacity:0; transform:scale(.4); }
+    50% { opacity:1; transform:scale(1.2); }
+  }
+
+  /* ---------- admin cards ---------- */
+  .admin-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:22px;
+  }
+  .admin-card {
+    padding:26px 20px;
+    text-align:center;
+    position:relative;
+    transition: transform .2s;
+  }
+  .admin-card:hover { transform:translateY(-8px) rotate(-1deg); }
+  .admin-skin {
+    width:80px; height:80px;
+    margin:0 auto 18px;
+    background:linear-gradient(160deg,#e0a97a,#b97a4a);
+    border:3px solid #1a1a1a;
+    position:relative;
+  }
+  .admin-skin::before {
+    content:"";
+    position:absolute;
+    top:22px; left:14px; width:14px; height:8px;
+    background:#1a1a1a;
+    box-shadow:38px 0 0 0 #1a1a1a;
+  }
+  .admin-skin.owner { background:linear-gradient(160deg,#f4c542,#a87a1f); }
+  .admin-name {
+    font-family:'Press Start 2P';
+    font-size:16px;
+    color:#fff;
+    margin-bottom:10px;
+  }
+  .admin-role {
+    display:inline-block;
+    font-size:20px;
+    padding:5px 14px;
+    background:#7a2a2a;
+    color:#fff;
+  }
+  .admin-role.wl { background:#a8841f; }
+
+  footer {
+    text-align:center;
+    padding:26px;
+    background:#1a1a1a;
+    font-size:18px;
+    color:#8a8a8a;
+    border-top:6px solid #2b2b2b;
+  }
+
+  @media (max-width:600px) {
+    .logo-title { font-size:26px; }
+    .tab-btn { font-size:10px; padding:10px 12px; }
+    h2.section-title { font-size:18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sky"></div>
+<div class="sun"></div>
+<div class="cloud cloud1"></div>
+<div class="cloud cloud2"></div>
+<div class="cloud cloud3"></div>
+<div id="particles"></div>
+
+<div class="achievement" id="achievement">
+  <div class="icon"></div>
+  <div>
+    <div class="txt-small">Osiągnięcie zdobyte!</div>
+    <div class="txt-big">Witaj w Brajanowie</div>
+  </div>
+</div>
+
+<header>
+  <div class="logo-title">BRAJANOWO</div>
+  <div class="logo-sub">Miasto, które rośnie od 2 lat. Dołącz do jego historii.</div>
+  <div class="ip-box" onclick="copyIP()">brajanowo123.aternos.me</div>
+</header>
+
+<nav>
+  <button class="tab-btn active" data-tab="home">Strona główna</button>
+  <button class="tab-btn" data-tab="pvp">PvP</button>
+  <button class="tab-btn" data-tab="admin">Administracja</button>
+</nav>
+
+<main>
+
+  <section id="home" class="active">
+    <h2 class="section-title">O serwerze</h2>
+    <div class="info-card pixel-panel">
+      <p>Brajanowo to miasto, które zaczęło się już 2 lata temu jako mała osada na skraju mapy - dziś to jeden z najbardziej rozpoznawalnych punktów naszego świata.</p>
+      <p>Przez ten czas było mało aktywnie, ale to się zmieni.</p>
+      <p>Dołącz teraz i zostań częścią tej opowieści.</p>
+    </div>
+
+    <div class="grass-strip"></div>
+
+    <div class="stats-grid">
+      <div class="stat-block pixel-panel"><span class="num">2 lata</span>historii serwera</div>
+      <div class="stat-block pixel-panel"><span class="num">24/7</span>serwer online</div>
+      <div class="stat-block pixel-panel"><span class="num">Miasto</span></div>
+      <div class="stat-block pixel-panel"><span class="num">1.21.4</span>wersja Minecrafta</div>
+    </div>
+  </section>
+
+  <section id="pvp">
+    <h2 class="section-title">Ranking PvP</h2>
+    <div class="leaderboard">
+      <div class="lb-row rank1">
+        <div class="sparkle" style="top:8px; left:70px;"></div>
+        <div class="sparkle" style="top:30px; left:90px; animation-delay:.6s;"></div>
+        <div class="lb-rank">#1</div>
+        <div class="lb-avatar"></div>
+        <div class="lb-name">czarny_aniol</div>
+        <div class="lb-badge">MISTRZ ARENY</div>
+      </div>
+      <div class="lb-row rank2">
+        <div class="lb-rank">#2</div>
+        <div class="lb-avatar"></div>
+        <div class="lb-name">yollby</div>
+        <div class="lb-badge">WICEMISTRZ</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="admin">
+    <h2 class="section-title">Administracja</h2>
+    <div class="admin-grid">
+      <div class="admin-card pixel-panel">
+        <div class="admin-skin owner"></div>
+        <div class="admin-name">WilkzxPL</div>
+        <div class="admin-role wl">Właściciel</div>
+      </div>
+      <div class="admin-card pixel-panel">
+        <div class="admin-skin owner"></div>
+        <div class="admin-name">czarny_aniol</div>
+        <div class="admin-role wl">Właściciel</div>
+      </div>
+      <div class="admin-card pixel-panel">
+        <div class="admin-skin owner"></div>
+        <div class="admin-name">yollby</div>
+        <div class="admin-role wl">Właściciel</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>Brajanowo &copy; 2024-2026 - miasto pisane od nowa, każdego dnia.</footer>
+
+<script>
+  // tab switching
+  const tabs = document.querySelectorAll('.tab-btn');
+  const sections = document.querySelectorAll('main section');
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabs.forEach(b => b.classList.remove('active'));
+      sections.forEach(s => s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
+  });
+
+  // achievement toast on load
+  window.addEventListener('load', () => {
+    const a = document.getElementById('achievement');
+    setTimeout(()=> a.classList.add('show'), 400);
+    setTimeout(()=> a.classList.remove('show'), 4500);
+  });
+
+  // copy IP
+  function copyIP() {
+    navigator.clipboard.writeText('brajanowo123.aternos.me').catch(()=>{});
+    const box = document.querySelector('.ip-box');
+    const old = box.textContent;
+    box.textContent = 'Skopiowano!';
+    setTimeout(()=> box.textContent = old, 1200);
+  }
+
+  // floating particles
+  const pContainer = document.getElementById('particles');
+  for (let i=0; i<18; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random()*100 + 'vw';
+    p.style.bottom = '-10px';
+    p.style.animationDuration = (8 + Math.random()*10) + 's';
+    p.style.animationDelay = (Math.random()*10) + 's';
+    pContainer.appendChild(p);
+  }
+</script>
+
+</body>
+</html>
