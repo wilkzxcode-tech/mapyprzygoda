@@ -104,6 +104,14 @@
   .btn-danger-outline:hover{background:var(--danger); color:#fff;}
   .btn-sm{padding:6px 12px; font-size:.78rem;}
 
+  .btn-like{
+    background:rgba(240, 71, 90, 0.15); border:1px solid var(--danger); color:var(--danger);
+    font-size:.82rem; font-weight:700; border-radius:var(--radius-sm); padding:6px 12px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .btn-like.liked{background:var(--danger); color:#fff;}
+  .btn-like:disabled{opacity:0.6; cursor:not-allowed;}
+
   .section-title{
     max-width:1180px; margin:34px auto 16px; font-size:1.5rem; color:#ffcc7a;
     display:flex; align-items:center; gap:10px; font-weight:700;
@@ -174,7 +182,6 @@
     font-size:.75rem; font-weight:700; padding:3px 8px; border-radius:4px; display:inline-block; margin-top:8px;
   }
   .status-pending{background:#7a5c1c; color:#ffea9f;}
-  .status-approved{background:#1f8a52; color:#bcf5d4;}
 
   .map-actions{padding:14px 16px; background:rgba(2,6,23,.5); display:flex; flex-direction:column; gap:9px;}
   .btn-download{
@@ -297,6 +304,9 @@
   </div>
 </div>
 
+<div class="section-title"><span>🏆 TOP 3 Najlepsze Mapy</span></div>
+<div class="maps-grid" id="topMapsContainer"></div>
+
 <div class="section-title"><span>🗺️ Wszystkie mapy</span> <span class="count" id="allCount">0</span></div>
 <div class="maps-grid" id="allMapsContainer"></div>
 
@@ -354,7 +364,7 @@ function loadData(){
     {
       id: 1, name: "Epicka Przygoda v1", version: "1.20", author: "wilkzxteam",
       desc: "Świetna mapa przygodowa pełna zagadek!", img: "", file: "https://example.com",
-      pin: "5363", status: "approved"
+      pin: "5363", status: "approved", likes: ["wilkzxteam"]
     }
   ];
   if(!maps) localStorage.setItem(MAPS_KEY, JSON.stringify(mapsCache));
@@ -510,7 +520,6 @@ function toggleBan3Days(username){
       user.bannedUntil = null;
       showToast(`Odblokowano użytkownika ${username}`, 'success');
     } else {
-      // Ustawienie bana na 3 dni (3 * 24h * 60m * 60s * 1000ms)
       user.bannedUntil = new Date().getTime() + (3 * 24 * 60 * 60 * 1000);
       showToast(`Zablokowano użytkownika ${username} na 3 dni`, 'error');
     }
@@ -523,6 +532,29 @@ function deleteUser(username){
   usersCache = usersCache.filter(u => u.username !== username);
   localStorage.setItem(USERS_KEY, JSON.stringify(usersCache));
   renderAdminUsers();
+}
+
+function toggleLike(mapId){
+  if(!currentUser){
+    return showToast('Zaloguj się, aby polubić mapę!', 'error');
+  }
+
+  const map = mapsCache.find(m => m.id === mapId);
+  if(!map) return;
+
+  if(!Array.isArray(map.likes)) map.likes = [];
+
+  const index = map.likes.indexOf(currentUser.username);
+  if(index === -1){
+    map.likes.push(currentUser.username);
+    showToast('Dodano serduszko!', 'success');
+  } else {
+    map.likes.splice(index, 1);
+    showToast('Usunięto serduszko.', 'info');
+  }
+
+  localStorage.setItem(MAPS_KEY, JSON.stringify(mapsCache));
+  renderMaps();
 }
 
 function onAddMapClick(){
@@ -588,7 +620,8 @@ function saveMap(){
       id: Date.now(),
       name, version, desc, img, file, pin,
       author: currentUser.username,
-      status: 'pending' // Wymaga akceptacji admina
+      status: 'pending',
+      likes: []
     };
     mapsCache.push(newMap);
     showToast('Dodano mapę! Oczekuje na akceptację admina.', 'success');
@@ -616,38 +649,25 @@ function deleteMap(id){
   showToast('Usunięto mapę.', 'info');
 }
 
-function renderMaps(){
-  const container = document.getElementById('allMapsContainer');
-  const query = document.getElementById('searchInput').value.toLowerCase();
-  container.innerHTML = '';
+function createMapCardHtml(map){
+  const thumb = map.img 
+    ? `<img src="${escapeHtml(map.img)}" class="map-thumb" alt="mapa">`
+    : `<div class="map-thumb-fallback">${escapeHtml(map.name)}</div>`;
 
   const isAdmin = currentUser && currentUser.role === 'admin';
+  const canDelete = isAdmin || (currentUser && currentUser.username === map.author);
+  const isPending = map.status === 'pending';
 
-  // Pokazujemy mapy zatwierdzone, a dla admina również te oczekujące
-  const filtered = mapsCache.filter(m => {
-    const matchesQuery = m.name.toLowerCase().includes(query);
-    if(isAdmin) return matchesQuery;
-    return matchesQuery && m.status === 'approved';
-  });
+  let statusBadge = '';
+  if(isAdmin && isPending){
+    statusBadge = `<div class="map-status status-pending">Oczekuje na akceptację</div>`;
+  }
 
-  document.getElementById('allCount').textContent = filtered.length;
+  const likesCount = Array.isArray(map.likes) ? map.likes.length : 0;
+  const isLiked = currentUser && Array.isArray(map.likes) && map.likes.includes(currentUser.username);
 
-  filtered.forEach(map => {
-    const card = document.createElement('div');
-    card.className = 'map-card';
-    const thumb = map.img 
-      ? `<img src="${escapeHtml(map.img)}" class="map-thumb" alt="mapa">`
-      : `<div class="map-thumb-fallback">${escapeHtml(map.name)}</div>`;
-
-    const canDelete = isAdmin || (currentUser && currentUser.username === map.author);
-    const isPending = map.status === 'pending';
-
-    let statusBadge = '';
-    if(isAdmin && isPending){
-      statusBadge = `<div class="map-status status-pending">Oczekuje na akceptację</div>`;
-    }
-
-    card.innerHTML = `
+  return `
+    <div class="map-card">
       ${thumb}
       <div class="map-content">
         <div class="map-title">${escapeHtml(map.name)}</div>
@@ -656,13 +676,56 @@ function renderMaps(){
         ${statusBadge}
       </div>
       <div class="map-actions">
+        <button class="btn-like ${isLiked ? 'liked' : ''}" onclick="toggleLike(${map.id})">
+          ❤️ <span>${likesCount}</span> ${isLiked ? 'Polubiono' : 'Polub'}
+        </button>
         <a href="${escapeHtml(map.file)}" target="_blank" class="btn-download">Pobierz mapę</a>
         <button class="btn btn-ghost btn-sm" onclick="openEditMap(${map.id})">✏️ Edytuj (PIN)</button>
         ${isAdmin && isPending ? `<button class="btn btn-ok btn-sm" onclick="approveMap(${map.id})">✅ Zatwierdź mapę</button>` : ''}
         ${canDelete ? `<button class="btn btn-danger-outline btn-sm" onclick="deleteMap(${map.id})">Usuń mapę</button>` : ''}
       </div>
-    `;
-    container.appendChild(card);
+    </div>
+  `;
+}
+
+function renderMaps(){
+  const allContainer = document.getElementById('allMapsContainer');
+  const topContainer = document.getElementById('topMapsContainer');
+  const query = document.getElementById('searchInput').value.toLowerCase();
+  
+  allContainer.innerHTML = '';
+  topContainer.innerHTML = '';
+
+  const isAdmin = currentUser && currentUser.role === 'admin';
+
+  // Filtrowanie map
+  const visibleMaps = mapsCache.filter(m => {
+    const matchesQuery = m.name.toLowerCase().includes(query);
+    if(isAdmin) return matchesQuery;
+    return matchesQuery && m.status === 'approved';
+  });
+
+  document.getElementById('allCount').textContent = visibleMaps.length;
+
+  // Rendrowanie sekcji TOP 3 (tylko zatwierdzone mapy z największą liczbą serduszek)
+  const approvedMaps = mapsCache.filter(m => m.status === 'approved');
+  const sortedTop = [...approvedMaps].sort((a, b) => {
+    const likesA = Array.isArray(a.likes) ? a.likes.length : 0;
+    const likesB = Array.isArray(b.likes) ? b.likes.length : 0;
+    return likesB - likesA;
+  }).slice(0, 3);
+
+  if(sortedTop.length === 0){
+    topContainer.innerHTML = `<p style="color:var(--ink-faint); grid-column: 1/-1;">Brak map do wyświetlenia w TOP 3.</p>`;
+  } else {
+    sortedTop.forEach(map => {
+      topContainer.innerHTML += createMapCardHtml(map);
+    });
+  }
+
+  // Rendrowanie listy wszystkich map
+  visibleMaps.forEach(map => {
+    allContainer.innerHTML += createMapCardHtml(map);
   });
 }
 
