@@ -1,507 +1,916 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Brajanowo - Serwer Minecraft</title>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html { scroll-behavior:smooth; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAPY PRZYGODA</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-  body {
-    font-family:'VT323', monospace;
-    font-size:22px;
-    color:#e8e8d8;
-    background:#3a2a1a;
-    overflow-x:hidden;
-    image-rendering: pixelated;
-  }
+        body {
+            background: linear-gradient(-45deg, #090d16, #1a102f, #2b0938, #0d1b2a);
+            background-size: 400% 400%;
+            animation: bgShift 12s ease infinite;
+            color: #f1f5f9;
+            padding: 20px;
+            min-height: 100vh;
+        }
 
-  /* ---------- animated sky background ---------- */
-  .sky {
-    position:fixed;
-    inset:0;
-    z-index:-3;
-    background: linear-gradient(180deg,#4EA6E8 0%, #7EC6F0 45%, #B9E4FB 75%, #6b9c4a 76%, #4a7a34 100%);
-  }
-  .sun {
-    position:fixed;
-    top:40px; right:60px;
-    width:70px; height:70px;
-    background:#FFEE58;
-    box-shadow: 0 0 0 8px rgba(255,238,88,.35);
-    z-index:-3;
-    animation: pulse-sun 3s infinite steps(4);
-  }
-  @keyframes pulse-sun {
-    0%,100% { box-shadow: 0 0 0 8px rgba(255,238,88,.35); }
-    50% { box-shadow: 0 0 0 16px rgba(255,238,88,.2); }
-  }
-  .cloud {
-    position:fixed;
-    z-index:-2;
-    background:#ffffff;
-    opacity:.9;
-    box-shadow:
-      40px 0 0 0 #fff,
-      -40px 10px 0 0 #fff,
-      20px -15px 0 0 #fff;
-  }
-  .cloud1 { top:80px; width:60px; height:30px; animation: drift 55s linear infinite; }
-  .cloud2 { top:160px; width:50px; height:26px; animation: drift 80s linear infinite; animation-delay:-20s; opacity:.75;}
-  .cloud3 { top:40px; width:40px; height:22px; animation: drift 40s linear infinite; animation-delay:-10s; opacity:.6;}
-  @keyframes drift {
-    from { transform:translateX(-200px); }
-    to   { transform:translateX(110vw); }
-  }
+        @keyframes bgShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
 
-  /* floating pixel particles (like enchant sparkles) */
-  .particle {
-    position:fixed;
-    width:4px; height:4px;
-    background:#FFEE58;
-    z-index:-1;
-    animation: floatup linear infinite;
-    opacity:.8;
-  }
-  @keyframes floatup {
-    0% { transform:translateY(0) translateX(0); opacity:0; }
-    10% { opacity:.9; }
-    100% { transform:translateY(-100vh) translateX(20px); opacity:0; }
-  }
+        header {
+            max-width: 1000px;
+            margin: 0 auto 30px auto;
+            text-align: center;
+        }
 
-  /* ---------- pixel border helper (minecraft panel look) ---------- */
-  .pixel-panel {
-    background:#8a8a8a;
-    border-top:4px solid #d4d4d4;
-    border-left:4px solid #d4d4d4;
-    border-right:4px solid #3f3f3f;
-    border-bottom:4px solid #3f3f3f;
-    box-shadow: 0 0 0 4px #1a1a1a;
-  }
+        h1 {
+            font-size: 3.2rem;
+            color: #ff9900;
+            text-shadow: 0 0 15px #ff9900, 0 0 30px #ff5500;
+            margin-bottom: 20px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
 
-  /* ---------- header ---------- */
-  header {
-    position:relative;
-    text-align:center;
-    padding:70px 20px 50px;
-    background: repeating-linear-gradient(0deg,#6b4a2e 0 8px, #5c3f28 8px 16px);
-    border-bottom:8px solid #1a1a1a;
-  }
-  header::before, header::after {
-    content:"";
-    position:absolute;
-    left:0; right:0;
-    height:14px;
-    background: repeating-linear-gradient(90deg,#7a9e4a 0 14px, #6b8f3e 14px 28px, #58762f 28px 42px);
-  }
-  header::before { top:0; }
-  header::after { bottom:0; }
+        .user-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.8);
+            padding: 10px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 153, 0, 0.3);
+        }
 
-  .logo-title {
-    font-family:'Press Start 2P', monospace;
-    font-size:44px;
-    color:#F4C542;
-    text-shadow: 4px 4px 0 #3f2a12, 8px 8px 0 rgba(0,0,0,.4);
-    letter-spacing:2px;
-    animation: title-bounce 2.5s ease-in-out infinite;
-  }
-  @keyframes title-bounce {
-    0%,100% { transform:translateY(0); }
-    50% { transform:translateY(-8px); }
-  }
-  .logo-sub {
-    margin-top:22px;
-    font-size:26px;
-    color:#c9e4b8;
-  }
-  .ip-box {
-    display:inline-block;
-    margin-top:26px;
-    padding:12px 26px;
-    font-family:'Press Start 2P', monospace;
-    font-size:14px;
-    color:#fff;
-    background:#2a2a2a;
-    border-top:3px solid #555;
-    border-left:3px solid #555;
-    border-right:3px solid #000;
-    border-bottom:3px solid #000;
-    cursor:pointer;
-    transition: transform .1s;
-  }
-  .ip-box:hover { transform:scale(1.05); background:#3a3a3a; }
-  .ip-box:active { transform:scale(.97); }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-  /* achievement toast */
-  .achievement {
-    position:fixed;
-    top:20px; left:50%;
-    transform:translate(-50%,-120px);
-    background:#1a1a1a;
-    border:3px solid #444;
-    padding:12px 20px;
-    display:flex;
-    align-items:center;
-    gap:14px;
-    z-index:999;
-    transition: transform .5s cubic-bezier(.2,1.4,.4,1);
-  }
-  .achievement.show { transform:translate(-50%,0); }
-  .achievement .icon {
-    width:32px; height:32px;
-    background:#F4C542;
-    border:2px solid #b8901f;
-    flex-shrink:0;
-    animation: spin-icon 4s linear infinite;
-  }
-  @keyframes spin-icon { 0%,100%{transform:rotateY(0);} 50%{transform:rotateY(180deg);} }
-  .achievement .txt-small { font-family:'Press Start 2P'; font-size:10px; color:#F4C542; }
-  .achievement .txt-big { font-family:'VT323'; font-size:20px; color:#fff; }
+        .avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #ff9900;
+        }
 
-  /* ---------- nav tabs ---------- */
-  nav {
-    position:sticky; top:0; z-index:100;
-    display:flex;
-    justify-content:center;
-    gap:6px;
-    background:#2b2b2b;
-    padding:10px;
-    border-bottom:6px solid #1a1a1a;
-    flex-wrap:wrap;
-  }
-  .tab-btn {
-    font-family:'Press Start 2P', monospace;
-    font-size:13px;
-    color:#e8e8d8;
-    background:#5a5a5a;
-    border-top:3px solid #8a8a8a;
-    border-left:3px solid #8a8a8a;
-    border-right:3px solid #2a2a2a;
-    border-bottom:3px solid #2a2a2a;
-    padding:14px 20px;
-    cursor:pointer;
-    transition: background .15s, transform .1s;
-    position:relative;
-  }
-  .tab-btn:hover { background:#6f6f6f; transform:translateY(-2px); }
-  .tab-btn.active {
-    background:#7a9e4a;
-    border-top-color:#a3c97a;
-    border-right-color:#3f5326;
-    border-bottom-color:#3f5326;
-    color:#fff;
-  }
+        .badge-admin {
+            background: #ef4444;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
 
-  /* ---------- sections ---------- */
-  main { max-width:1000px; margin:0 auto; padding:50px 20px 80px; position:relative; }
-  section { display:none; animation: fade-in .4s ease; }
-  section.active { display:block; }
-  @keyframes fade-in { from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
+        .header-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
 
-  h2.section-title {
-    font-family:'Press Start 2P', monospace;
-    font-size:26px;
-    color:#F4C542;
-    text-align:center;
-    margin-bottom:36px;
-    text-shadow:3px 3px 0 #1a1a1a;
-  }
+        .search-bar-container {
+            max-width: 600px;
+            margin: 0 auto 20px auto;
+        }
 
-  .info-card {
-    padding:28px;
-    margin-bottom:26px;
-    font-size:22px;
-    line-height:1.6;
-  }
-  .info-card p { margin-bottom:12px; }
+        .search-bar {
+            width: 100%;
+            padding: 14px 20px;
+            font-size: 16px;
+            border-radius: 30px;
+            border: 2px solid #ff9900;
+            background: rgba(15, 23, 42, 0.9);
+            color: #fff;
+            outline: none;
+            box-shadow: 0 0 15px rgba(255, 153, 0, 0.3);
+            transition: all 0.3s;
+        }
 
-  .stats-grid {
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-    gap:18px;
-    margin-top:30px;
-  }
-  .stat-block {
-    padding:20px;
-    text-align:center;
-  }
-  .stat-block .num {
-    font-family:'Press Start 2P';
-    font-size:26px;
-    color:#7a9e4a;
-    display:block;
-    margin-bottom:10px;
-  }
+        .search-bar:focus {
+            box-shadow: 0 0 25px rgba(255, 153, 0, 0.7);
+        }
 
-  /* grass block decorative divider */
-  .grass-strip {
-    height:22px;
-    margin:34px 0;
-    background: repeating-linear-gradient(90deg,#7a9e4a 0 22px, #6b8f3e 22px 44px);
-    border-top:4px solid #a3c97a;
-    border-bottom:4px solid #4a3018;
-    box-shadow:0 4px 0 0 #4a3018;
-  }
+        .btn-main, .btn-small {
+            background: linear-gradient(135deg, #ff9900 0%, #e65c00 100%);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 153, 0, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
 
-  /* ---------- PvP leaderboard ---------- */
-  .leaderboard { display:flex; flex-direction:column; gap:16px; }
-  .lb-row {
-    display:flex;
-    align-items:center;
-    gap:20px;
-    padding:16px 22px;
-    background:#4a4a4a;
-    border-top:3px solid #6f6f6f;
-    border-left:3px solid #6f6f6f;
-    border-right:3px solid #2a2a2a;
-    border-bottom:3px solid #2a2a2a;
-    position:relative;
-    overflow:hidden;
-    transition: transform .15s;
-  }
-  .lb-row:hover { transform:translateX(6px); }
-  .lb-rank {
-    font-family:'Press Start 2P';
-    font-size:22px;
-    width:50px;
-    text-align:center;
-    flex-shrink:0;
-  }
-  .lb-row.rank1 { background:#5c4a1a; border-color:#F4C542 #6b4a10 #6b4a10 #F4C542; }
-  .lb-row.rank1 .lb-rank { color:#F4C542; text-shadow:0 0 8px rgba(244,197,66,.8); }
-  .lb-row.rank2 .lb-rank { color:#c9c9c9; }
+        .btn-main:hover, .btn-small:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 153, 0, 0.7);
+        }
 
-  .lb-avatar {
-    width:44px; height:44px;
-    background:linear-gradient(135deg,#7a9e4a,#4a6a2a);
-    border:2px solid #1a1a1a;
-    flex-shrink:0;
-    position:relative;
-  }
-  .lb-avatar::after {
-    content:"";
-    position:absolute; inset:8px;
-    background:#3a2a1a;
-  }
-  .lb-name { font-size:26px; flex-grow:1; }
-  .lb-badge {
-    font-family:'Press Start 2P';
-    font-size:10px;
-    padding:6px 10px;
-    background:#7a2a2a;
-    color:#fff;
-    flex-shrink:0;
-  }
-  .rank1 .lb-badge { background:#a8841f; }
+        .btn-admin-toggle {
+            background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
 
-  .sparkle {
-    position:absolute;
-    width:6px; height:6px;
-    background:#fff;
-    animation: sparkle-anim 1.6s infinite ease-in-out;
-  }
-  @keyframes sparkle-anim {
-    0%,100% { opacity:0; transform:scale(.4); }
-    50% { opacity:1; transform:scale(1.2); }
-  }
+        .btn-admin-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.7);
+        }
 
-  /* ---------- admin cards ---------- */
-  .admin-grid {
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-    gap:22px;
-  }
-  .admin-card {
-    padding:26px 20px;
-    text-align:center;
-    position:relative;
-    transition: transform .2s;
-  }
-  .admin-card:hover { transform:translateY(-8px) rotate(-1deg); }
-  .admin-skin {
-    width:80px; height:80px;
-    margin:0 auto 18px;
-    background:linear-gradient(160deg,#e0a97a,#b97a4a);
-    border:3px solid #1a1a1a;
-    position:relative;
-  }
-  .admin-skin::before {
-    content:"";
-    position:absolute;
-    top:22px; left:14px; width:14px; height:8px;
-    background:#1a1a1a;
-    box-shadow:38px 0 0 0 #1a1a1a;
-  }
-  .admin-skin.owner { background:linear-gradient(160deg,#f4c542,#a87a1f); }
-  .admin-name {
-    font-family:'Press Start 2P';
-    font-size:16px;
-    color:#fff;
-    margin-bottom:10px;
-  }
-  .admin-role {
-    display:inline-block;
-    font-size:20px;
-    padding:5px 14px;
-    background:#7a2a2a;
-    color:#fff;
-  }
-  .admin-role.wl { background:#a8841f; }
+        .section-title {
+            max-width: 1200px;
+            margin: 30px auto 15px auto;
+            font-size: 1.8rem;
+            color: #ffcc00;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-  footer {
-    text-align:center;
-    padding:26px;
-    background:#1a1a1a;
-    font-size:18px;
-    color:#8a8a8a;
-    border-top:6px solid #2b2b2b;
-  }
+        .form-modal, .admin-panel {
+            display: none;
+            max-width: 650px;
+            margin: 20px auto;
+            background: rgba(15, 23, 42, 0.95);
+            border: 2px solid #ff9900;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+        }
 
-  @media (max-width:600px) {
-    .logo-title { font-size:26px; }
-    .tab-btn { font-size:10px; padding:10px 12px; }
-    h2.section-title { font-size:18px; }
-  }
-</style>
+        .admin-panel {
+            border-color: #ef4444;
+        }
+
+        .form-modal h2, .admin-panel h2 {
+            color: #ff9900;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .admin-panel h2 {
+            color: #ef4444;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            margin-bottom: 4px;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #020617;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .maps-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .map-card {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 153, 0, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .map-card:hover {
+            transform: translateY(-5px);
+            border-color: #ff9900;
+            box-shadow: 0 8px 25px rgba(255, 153, 0, 0.4);
+        }
+
+        .top-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+            z-index: 2;
+        }
+
+        .map-card img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+        }
+
+        .map-content {
+            padding: 15px;
+            flex-grow: 1;
+        }
+
+        .map-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .map-title {
+            font-size: 1.25rem;
+            color: #ff9900;
+        }
+
+        .version-badge {
+            background: #334155;
+            color: #38bdf8;
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .map-author {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin: 6px 0 10px 0;
+        }
+
+        .map-desc {
+            font-size: 0.95rem;
+            color: #e2e8f0;
+            line-height: 1.4;
+        }
+
+        .map-actions {
+            padding: 15px;
+            background: rgba(2, 6, 23, 0.6);
+            display: flex;
+            gap: 8px;
+            flex-direction: column;
+        }
+
+        .like-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .btn-heart {
+            background: transparent;
+            border: 2px solid #ff4757;
+            color: #ff4757;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-heart:hover {
+            background: #ff4757;
+            color: #fff;
+            box-shadow: 0 0 10px rgba(255, 71, 87, 0.6);
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
+            color: white;
+            text-align: center;
+            padding: 10px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            transition: transform 0.2s;
+            display: block;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn-download:hover { transform: scale(1.02); }
+
+        .btn-test {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            color: white;
+            text-align: center;
+            padding: 8px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            display: inline-block;
+            font-size: 0.85rem;
+        }
+
+        .btn-group-author {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-edit, .btn-delete, .btn-approve, .btn-reject, .btn-ban {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+        }
+
+        .btn-edit { background: #3b82f6; }
+        .btn-delete { background: #ef4444; }
+        .btn-approve { background: #22c55e; }
+        .btn-reject { background: #dc2626; }
+        .btn-ban { background: #f59e0b; }
+        
+        .user-card {
+            background: #020617;
+            border: 1px solid #334155;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .user-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-bio {
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            background: rgba(255,255,255,0.05);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-style: italic;
+        }
+    </style>
 </head>
 <body>
 
-<div class="sky"></div>
-<div class="sun"></div>
-<div class="cloud cloud1"></div>
-<div class="cloud cloud2"></div>
-<div class="cloud cloud3"></div>
-<div id="particles"></div>
+    <header>
+        <h1>MAPY PRZYGODA</h1>
+        
+        <div class="user-bar">
+            <div class="user-info" id="userInfoDisplay">
+                <span>Niezalogowany</span>
+            </div>
+            <div id="authButtons">
+                <button class="btn-small" onclick="openAuthModal('login')">Zaloguj się</button>
+                <button class="btn-small" onclick="openAuthModal('register')">Zarejestruj się</button>
+            </div>
+        </div>
 
-<div class="achievement" id="achievement">
-  <div class="icon"></div>
-  <div>
-    <div class="txt-small">Osiągnięcie zdobyte!</div>
-    <div class="txt-big">Witaj w Brajanowie</div>
-  </div>
-</div>
+        <div class="header-buttons">
+            <button class="btn-main" onclick="toggleForm()">+ DODAJ NOWĄ MAPĘ</button>
+            <button class="btn-admin-toggle" id="btnAdminPanel" onclick="openAdminPanel()">🔒 PANEL ADMINA</button>
+        </div>
 
-<header>
-  <div class="logo-title">BRAJANOWO</div>
-  <div class="logo-sub">Miasto, które rośnie od 2 lat. Dołącz do jego historii.</div>
-  <div class="ip-box" onclick="copyIP()">brajanowo123.aternos.me</div>
-</header>
+        <div class="search-bar-container">
+            <input type="text" id="searchInput" class="search-bar" placeholder="Szukaj mapy po tytule..." onkeyup="filterMaps()">
+        </div>
+    </header>
 
-<nav>
-  <button class="tab-btn active" data-tab="home">Strona główna</button>
-  <button class="tab-btn" data-tab="pvp">PvP</button>
-  <button class="tab-btn" data-tab="admin">Administracja</button>
-</nav>
+    <div class="form-modal" id="authForm">
+        <h2 id="authTitle">Logowanie</h2>
+        <div class="form-group" id="groupUsername">
+            <label>Nazwa użytkownika:</label>
+            <input type="text" id="authUsername">
+        </div>
+        <div class="form-group" id="groupEmail">
+            <label>Email:</label>
+            <input type="email" id="authEmail">
+        </div>
+        <div class="form-group" id="groupPassword">
+            <label>Hasło:</label>
+            <input type="password" id="authPassword">
+        </div>
+        <div class="form-group" id="groupAvatar">
+            <label>Link do Zdjęcia Profilowego (URL):</label>
+            <input type="text" id="authAvatar" placeholder="https://...">
+        </div>
+        <div class="form-group" id="groupBio">
+            <label>Opis Profilu (Bio):</label>
+            <textarea id="authBio" rows="2" placeholder="Napisz coś o sobie..."></textarea>
+        </div>
+        <button class="btn-main" style="width: 100%; margin-top: 10px;" id="authSubmitBtn" onclick="handleAuthSubmit()">ZATWIERDŹ</button>
+        <button class="btn-small" style="width: 100%; margin-top: 5px; background: #334155;" onclick="closeAuthModal()">ANULUJ</button>
+    </div>
 
-<main>
+    <div class="form-modal" id="mapForm">
+        <h2 id="formTitle">Dodaj Mapę</h2>
+        <input type="hidden" id="editMapId">
+        
+        <div class="form-group">
+            <label>Nazwa Mapy:</label>
+            <input type="text" id="mapName" placeholder="Np. Epicka Przygoda v1">
+        </div>
+        <div class="form-group">
+            <label>Wersja Gry:</label>
+            <select id="mapVersion">
+                <option value="1.20+">1.20+</option>
+                <option value="1.19">1.19</option>
+                <option value="1.18">1.18</option>
+                <option value="1.16">1.16</option>
+                <option value="1.12">1.12</option>
+                <option value="Inna">Inna</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Hasło Mapy (do edycji/usuwania):</label>
+            <input type="password" id="mapPassword" placeholder="Wpisz tajne hasło">
+        </div>
+        <div class="form-group">
+            <label>Opis Mapy:</label>
+            <textarea id="mapDesc" rows="3" placeholder="Krótki opis przygody..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>Link do Zdjęcia (URL):</label>
+            <input type="text" id="mapImg" placeholder="https://...">
+        </div>
+        <div class="form-group">
+            <label>Link do Pobrania Mapy (URL):</label>
+            <input type="text" id="mapFile" placeholder="https://...">
+        </div>
 
-  <section id="home" class="active">
-    <h2 class="section-title">O serwerze</h2>
-    <div class="info-card pixel-panel">
-      <p>Brajanowo to miasto, które zaczęło się już 2 lata temu jako mała osada na skraju mapy - dziś to jeden z najbardziej rozpoznawalnych punktów naszego świata.</p>
-      <p>Przez ten czas było mało aktywnie, ale to się zmieni.</p>
-      <p>Dołącz teraz i zostań częścią tej opowieści.</p>
-    </div>
+        <button class="btn-main" style="width: 100%; margin-top: 10px;" onclick="saveMap()">ZAPISZ MAPĘ</button>
+    </div>
 
-    <div class="grass-strip"></div>
+    <div class="admin-panel" id="adminPanel">
+        <h2>🛠️ Panel Admina</h2>
+        
+        <h3 style="color: #ff9900; margin: 15px 0 10px 0;">Oczekujące Mapy</h3>
+        <div id="pendingMapsList"></div>
 
-    <div class="stats-grid">
-      <div class="stat-block pixel-panel"><span class="num">2 lata</span>historii serwera</div>
-      <div class="stat-block pixel-panel"><span class="num">24/7</span>serwer online</div>
-      <div class="stat-block pixel-panel"><span class="num">Miasto</span></div>
-      <div class="stat-block pixel-panel"><span class="num">1.21.4</span>wersja Minecrafta</div>
-    </div>
-  </section>
+        <hr style="border: 0; height: 1px; background: #334155; margin: 20px 0;">
 
-  <section id="pvp">
-    <h2 class="section-title">Ranking PvP</h2>
-    <div class="leaderboard">
-      <div class="lb-row rank1">
-        <div class="sparkle" style="top:8px; left:70px;"></div>
-        <div class="sparkle" style="top:30px; left:90px; animation-delay:.6s;"></div>
-        <div class="lb-rank">#1</div>
-        <div class="lb-avatar"></div>
-        <div class="lb-name">czarny_aniol</div>
-        <div class="lb-badge">MISTRZ ARENY</div>
-      </div>
-      <div class="lb-row rank2">
-        <div class="lb-rank">#2</div>
-        <div class="lb-avatar"></div>
-        <div class="lb-name">yollby</div>
-        <div class="lb-badge">WICEMISTRZ</div>
-      </div>
-    </div>
-  </section>
+        <h3 style="color: #ff9900; margin: 15px 0 10px 0;">Zarządzanie Kontami i Profile</h3>
+        <div id="usersList"></div>
 
-  <section id="admin">
-    <h2 class="section-title">Administracja</h2>
-    <div class="admin-grid">
-      <div class="admin-card pixel-panel">
-        <div class="admin-skin owner"></div>
-        <div class="admin-name">WilkzxPL</div>
-        <div class="admin-role wl">Właściciel</div>
-      </div>
-      <div class="admin-card pixel-panel">
-        <div class="admin-skin owner"></div>
-        <div class="admin-name">czarny_aniol</div>
-        <div class="admin-role wl">Właściciel</div>
-      </div>
-      <div class="admin-card pixel-panel">
-        <div class="admin-skin owner"></div>
-        <div class="admin-name">yollby</div>
-        <div class="admin-role wl">Właściciel</div>
-      </div>
-    </div>
-  </section>
+        <button class="btn-main" style="width: 100%; margin-top: 15px; background: #334155;" onclick="closeAdminPanel()">ZAMKNIJ PANEL</button>
+    </div>
 
-</main>
+    <div class="section-title">
+        <span>🏆 TOP 3 LUBIANE MAPY</span>
+    </div>
+    <div class="maps-grid" id="topMapsContainer"></div>
 
-<footer>Brajanowo &copy; 2024-2026 - miasto pisane od nowa, każdego dnia.</footer>
+    <hr style="border: 0; height: 1px; background: rgba(255, 153, 0, 0.3); max-width: 1200px; margin: 30px auto;">
 
-<script>
-  // tab switching
-  const tabs = document.querySelectorAll('.tab-btn');
-  const sections = document.querySelectorAll('main section');
-  tabs.forEach(btn => {
-    btn.addEventListener('click', () => {
-      tabs.forEach(b => b.classList.remove('active'));
-      sections.forEach(s => s.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById(btn.dataset.tab).classList.add('active');
-      window.scrollTo({top:0, behavior:'smooth'});
-    });
-  });
+    <div class="section-title">
+        <span>🗺️ WSZYSTKIE MAPY</span>
+    </div>
+    <div class="maps-grid" id="allMapsContainer"></div>
 
-  // achievement toast on load
-  window.addEventListener('load', () => {
-    const a = document.getElementById('achievement');
-    setTimeout(()=> a.classList.add('show'), 400);
-    setTimeout(()=> a.classList.remove('show'), 4500);
-  });
+    <script>
+        let currentUser = JSON.parse(localStorage.getItem('adventure_hub_current_user') || 'null');
+        let currentAuthMode = 'login'; 
 
-  // copy IP
-  function copyIP() {
-    navigator.clipboard.writeText('brajanowo123.aternos.me').catch(()=>{});
-    const box = document.querySelector('.ip-box');
-    const old = box.textContent;
-    box.textContent = 'Skopiowano!';
-    setTimeout(()=> box.textContent = old, 1200);
-  }
+        const initialMaps = [
+            {
+                id: 1,
+                name: "Epicka Przygoda v1",
+                version: "1.20+",
+                author: "wilkzx",
+                password: "123",
+                desc: "Świetna mapa przygodowa pełna zagadek!",
+                img: "https://via.placeholder.com/300x160/0f172a/ff9900?text=Epicka+Przygoda",
+                file: "https://example.com",
+                likes: 12,
+                approved: true
+            }
+        ];
 
-  // floating particles
-  const pContainer = document.getElementById('particles');
-  for (let i=0; i<18; i++) {
-    const p = document.createElement('div');
-    p.className = 'particle';
-    p.style.left = Math.random()*100 + 'vw';
-    p.style.bottom = '-10px';
-    p.style.animationDuration = (8 + Math.random()*10) + 's';
-    p.style.animationDelay = (Math.random()*10) + 's';
-    pContainer.appendChild(p);
-  }
-</script>
+        function getUsers() {
+            let users = JSON.parse(localStorage.getItem('adventure_hub_users') || '[]');
+            
+            let index = users.findIndex(u => u.username === 'wilkzx');
+            if (index === -1) {
+                const adminWilkzx = {
+                    id: 999999,
+                    username: 'wilkzx',
+                    email: 'wilkzx@admin.pl',
+                    password: 'wilkzx',
+                    avatar: '',
+                    bio: 'Główny Administrator Strony!',
+                    role: 'admin',
+                    bannedUntil: null
+                };
+                users.push(adminWilkzx);
+            } else {
+                users[index].role = 'admin';
+            }
 
-</body>
-</html>
+            saveUsers(users);
+            return users;
+        }
+
+        function saveUsers(users) {
+            localStorage.setItem('adventure_hub_users', JSON.stringify(users));
+        }
+
+        function getMaps() {
+            const data = localStorage.getItem('adventure_hub_maps');
+            if (!data) {
+                localStorage.setItem('adventure_hub_maps', JSON.stringify(initialMaps));
+                return initialMaps;
+            }
+            return JSON.parse(data);
+        }
+
+        function saveMapsToStorage(maps) {
+            localStorage.setItem('adventure_hub_maps', JSON.stringify(maps));
+        }
+
+        function updateUIUser() {
+            const display = document.getElementById('userInfoDisplay');
+            const authBtns = document.getElementById('authButtons');
+
+            if (currentUser) {
+                const users = getUsers();
+                const freshUser = users.find(u => u.username === currentUser.username);
+                if (freshUser) currentUser = freshUser;
+
+                if (currentUser.bannedUntil && new Date().getTime() < currentUser.bannedUntil) {
+                    alert("Twoje konto jest zabanowane do: " + new Date(currentUser.bannedUntil).toLocaleString());
+                    logout();
+                    return;
+                }
+
+                const avatarSrc = currentUser.avatar || 'https://via.placeholder.com/45/ff9900/000?text=U';
+                const adminBadge = currentUser.role === 'admin' ? '<span class="badge-admin">ADMIN</span>' : '';
+                
+                display.innerHTML = `
+                    <img src="${avatarSrc}" class="avatar">
+                    <div>
+                        <b>${currentUser.username}</b> ${adminBadge}
+                        <div style="font-size:0.75rem; color:#94a3b8;">${currentUser.bio || 'Brak opisu'}</div>
+                    </div>
+                `;
+
+                authBtns.innerHTML = `
+                    <button class="btn-small" onclick="openAuthModal('edit')">Edytuj Profil</button>
+                    <button class="btn-small" style="background: #dc2626;" onclick="logout()">Wyloguj</button>
+                `;
+            } else {
+                display.innerHTML = `<span>Niezalogowany</span>`;
+                authBtns.innerHTML = `
+                    <button class="btn-small" onclick="openAuthModal('login')">Zaloguj się</button>
+                    <button class="btn-small" onclick="openAuthModal('register')">Zarejestruj się</button>
+                `;
+            }
+        }
+
+        function openAuthModal(mode) {
+            currentAuthMode = mode;
+            const form = document.getElementById('authForm');
+            const title = document.getElementById('authTitle');
+            
+            document.getElementById('groupUsername').style.display = 'block';
+            document.getElementById('groupPassword').style.display = 'block';
+            document.getElementById('groupEmail').style.display = (mode === 'login') ? 'none' : 'block';
+            document.getElementById('groupAvatar').style.display = (mode === 'login') ? 'none' : 'block';
+            document.getElementById('groupBio').style.display = (mode === 'login') ? 'none' : 'block';
+
+            if (mode === 'login') {
+                title.innerText = 'Logowanie';
+            } else if (mode === 'register') {
+                title.innerText = 'Rejestracja Konta';
+            } else if (mode === 'edit') {
+                title.innerText = 'Edycja Profilu';
+                document.getElementById('authUsername').value = currentUser.username;
+                document.getElementById('authUsername').disabled = true;
+                document.getElementById('authEmail').value = currentUser.email || '';
+                document.getElementById('authAvatar').value = currentUser.avatar || '';
+                document.getElementById('authBio').value = currentUser.bio || '';
+            }
+
+            form.style.display = 'block';
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authForm').style.display = 'none';
+            document.getElementById('authUsername').disabled = false;
+            document.getElementById('authUsername').value = '';
+            document.getElementById('authEmail').value = '';
+            document.getElementById('authPassword').value = '';
+            document.getElementById('authAvatar').value = '';
+            document.getElementById('authBio').value = '';
+        }
+
+        function handleAuthSubmit() {
+            const username = document.getElementById('authUsername').value.trim();
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value.trim();
+            const avatar = document.getElementById('authAvatar').value.trim();
+            const bio = document.getElementById('authBio').value.trim();
+
+            let users = getUsers();
+
+            if (currentAuthMode === 'register') {
+                if (!username || !email || !password) {
+                    alert('Wypełnij nazwę użytkownika, email oraz hasło!');
+                    return;
+                }
+
+                if (users.some(u => u.username === username)) {
+                    alert('Użytkownik o takiej nazwie już istnieje!');
+                    return;
+                }
+
+                const newUser = {
+                    id: Date.now(),
+                    username: username,
+                    email: email,
+                    password: password,
+                    avatar: avatar,
+                    bio: bio,
+                    role: username === 'wilkzx' ? 'admin' : 'user',
+                    bannedUntil: null
+                };
+
+                users.push(newUser);
+                saveUsers(users);
+                currentUser = newUser;
+                localStorage.setItem('adventure_hub_current_user', JSON.stringify(currentUser));
+                alert('Konto zostało pomyślnie zarejestrowane!');
+
+            } else if (currentAuthMode === 'login') {
+                const user = users.find(u => u.username === username && u.password === password);
+                
+                if (!user) {
+                    alert('Nieprawidłowa nazwa użytkownika lub hasło!');
+                    return;
+                }
+
+                if (user.bannedUntil && new Date().getTime() < user.bannedUntil) {
+                    alert("To konto jest zabanowane do: " + new Date(user.bannedUntil).toLocaleString());
+                    return;
+                }
+
+                currentUser = user;
+                localStorage.setItem('adventure_hub_current_user', JSON.stringify(currentUser));
+                alert('Pomyślnie zalogowano!');
+
+            } else if (currentAuthMode === 'edit') {
+                const index = users.findIndex(u => u.username === currentUser.username);
+                if (index !== -1) {
+                    if (password) users[index].password = password;
+                    users[index].email = email;
+                    users[index].avatar = avatar;
+                    users[index].bio = bio;
+
+                    currentUser = users[index];
+                    saveUsers(users);
+                    localStorage.setItem('adventure_hub_current_user', JSON.stringify(currentUser));
+                    alert('Profil zaktualizowany!');
+                }
+            }
+
+            closeAuthModal();
+            updateUIUser();
+            renderMaps();
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('adventure_hub_current_user');
+            closeAdminPanel();
+            updateUIUser();
+            renderMaps();
+        }
+
+        function toggleForm() {
+            if (!currentUser) {
+                alert("Musisz się zalogować, aby móc dodać nową mapę!");
+                openAuthModal('login');
+                return;
+            }
+            const form = document.getElementById('mapForm');
+            form.style.display = form.style.display === 'block' ? 'none' : 'block';
+            if (form.style.display === 'none') resetForm();
+        }
+
+        function resetForm() {
+            document.getElementById('editMapId').value = '';
+            document.getElementById('mapName').value = '';
+            document.getElementById('mapVersion').value = '1.20+';
+            document.getElementById('mapPassword').value = '';
+            document.getElementById('mapDesc').value = '';
+            document.getElementById('mapImg').value = '';
+            document.getElementById('mapFile').value = '';
+            document.getElementById('formTitle').innerText = 'Dodaj Mapę';
+        }
+
+        function saveMap() {
+            const id = document.getElementById('editMapId').value;
+            const name = document.getElementById('mapName').value.trim();
+            const version = document.getElementById('mapVersion').value;
+            const password = document.getElementById('mapPassword').value.trim();
+            const desc = document.getElementById('mapDesc').value.trim();
+            const img = document.getElementById('mapImg').value.trim();
+            const file = document.getElementById('mapFile').value.trim();
+
+            if (!name || !password) {
+                alert('Wypełnij: Nazwę Mapy i Hasło!');
+                return;
+            }
+
+            let maps = getMaps();
+
+            if (id) {
+                const index = maps.findIndex(m => m.id == id);
+                if (index !== -1) {
+                    maps[index].name = name;
+                    maps[index].version = version;
+                    maps[index].desc = desc;
+                    maps[index].img = img;
+                    maps[index].file = file;
+                    alert('Mapa została zaktualizowana!');
+                }
+            } else {
+                const newMap = {
+                    id: Date.now(),
+                    name: name,
+                    version: version,
+                    author: currentUser.username,
+                    password: password,
+                    desc: desc,
+                    img: img,
+                    file: file,
+                    likes: 0,
+                    approved: false
+                };
+                maps.push(newMap);
+                alert('Mapa wysłana! Pojawi się na stronie po zatwierdzeniu przez Admina.');
+            }
+
+            saveMapsToStorage(maps);
+            resetForm();
+            toggleForm();
+            renderMaps();
+        }
+
+        function addLike(id) {
+            if (!currentUser) {
+                alert("Musisz być zalogowany, aby móc polubić mapę!");
+                openAuthModal('login');
+                return;
+            }
+
+            let maps = getMaps();
+            const index = maps.findIndex(m => m.id == id);
+            if (index !== -1) {
+                maps[index].likes = (maps[index].likes || 0) + 1;
+                saveMapsToStorage(maps);
+                renderMaps();
+            }
+        }
+
+        // POBIERANIE BEZ WYMOGU LOGOWANIA
+        function handleDownload(fileUrl) {
+            if (!fileUrl || fileUrl === '#') {
+                alert("Brak dodanego linku do pobrania.");
+                return;
+            }
+            window.open(fileUrl, '_blank');
+        }
+
+        function createCardHTML(map, isTopRank = null) {
+            const defaultImg = "https://via.placeholder.com/300x160/0f172a/ff9900?text=MAPY+PRZYGODA";
+            const topBadgeHTML = isTopRank ? `<div class="top-badge">TOP #${isTopRank}</div>` : '';
+
+            return `
+                <div class="map-card" data-title="${map.name.toLowerCase()}">
+                    ${topBadgeHTML}
+                    <div>
+                        <img src="${map.img || defaultImg}" alt="Ikona">
+                        <div class="map-content">
+                            <div class="map-header-flex">
+                                <h3 class="map-title">${map.name}</h3>
+                                <span class="version-badge">v${map.version || '1.20+'}</span>
+                            </div>
+                            <div class="map-author">Autor: <b>${map.author}</b></div>
+                            <p class="map-desc">${map.desc}</p>
+                        </div>
+                    </div>
+                    <div class="map-actions">
+                        <div class="like-bar">
+                            <button class="btn-heart" onclick="addLike(${map.id})">
+                                ❤️ <span>${map.likes || 0}</span>
+                            </button>
+                        </div>
+                        <button class="btn-download" onclick="handleDownload('${map.file || '#'}')">POBIERZ MAPĘ</button>
+                        <div class="btn-group-author">
+                            <button class="btn-edit" onclick="editMap(${map.id})">Edytuj</button>
+                            <button class="btn-delete" onclick="deleteMap(${map.id})">Usuń</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMaps() {
+            const allContainer = document.getElementById('allMapsContainer');
+            const topContainer = document.getElementById('topMapsContainer');
+            
+            allContainer.innerHTML = '';
+            topContainer.innerHTML = '';
+
+            const maps = getMaps();
+            const approvedMaps = maps.filter(m => m.approved);
+
+            if (approvedMaps.length === 0) {
+                allContainer.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #94a3b8;">Brak zatwierdzonych map.</p>';
+                topContainer.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #94a3b8;">Brak najpopularniejszych map.</p>';
+                return;
+            }
+
+            approvedMaps.forEach(map => {
+                allContainer.innerHTML += createCardHTML(map);
+            });
+
+            const sortedMaps = [...approvedMaps].sort((a, b) => (b.likes || 0) - (a.likes || 0));
+            const top3 = sortedMaps.slice(0, 3);
+
+            top3.forEach((map, index) => {
+                topContainer.innerHTML += createCardHTML(map, index + 1);
+            });
+        }
+
+        function filterMaps() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('#allMapsContainer .map-card');
+
+            cards.forEach(card => {
+                const title = card.getAttribute('data-title');
+                if (title.includes(query)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function deleteMap(id) {
+            const maps = getMaps();
+            const map = maps.find(m => m.id == id);
+
+            if (!map) return;
+
+            const inputPass = prompt("Wpisz Hasło Mapy, aby ją usunąć:");
+            if (inputPass === map.password) {
+                const up
