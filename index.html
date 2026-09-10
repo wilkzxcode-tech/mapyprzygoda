@@ -1,916 +1,1146 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MAPY PRZYGODA</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapy Przygoda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-1:#090d16; --bg-2:#170f28; --bg-3:#1f0c30; --bg-4:#0c1a27;
+    --panel:#0f1729cc; --panel-solid:#0f1729;
+    --border:#2a2340;
+    --amber:#ff9d2e; --amber-deep:#e0650f;
+    --teal:#38d6d6;
+    --danger:#f0475a; --danger-deep:#a4283a;
+    --ok:#3ecf7e; --ok-deep:#1f8a52;
+    --ink:#f2ede4; --ink-dim:#a9a4bd; --ink-faint:#726d8a;
+    --radius-lg:18px; --radius-md:12px; --radius-sm:8px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Inter', system-ui, sans-serif;
+    background:
+      radial-gradient(1200px 700px at 15% -10%, #2a1140 0%, transparent 60%),
+      radial-gradient(1000px 600px at 100% 10%, #0d2536 0%, transparent 55%),
+      linear-gradient(160deg, var(--bg-1), var(--bg-2) 45%, var(--bg-3) 75%, var(--bg-4));
+    color:var(--ink);
+    min-height:100vh;
+    padding:24px 18px 80px;
+  }
+  h1,h2,h3{font-family:'Cinzel', serif;}
+  a{color:inherit;}
+  ::selection{background:var(--amber); color:#1a1002;}
 
-        body {
-            background: linear-gradient(-45deg, #090d16, #1a102f, #2b0938, #0d1b2a);
-            background-size: 400% 400%;
-            animation: bgShift 12s ease infinite;
-            color: #f1f5f9;
-            padding: 20px;
-            min-height: 100vh;
-        }
+  /* ---------- layout shells ---------- */
+  .wrap{max-width:1180px; margin:0 auto;}
+  header.top{max-width:1180px; margin:0 auto 28px;}
 
-        @keyframes bgShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+  .hero{
+    text-align:center; padding:34px 20px 26px; margin-bottom:22px;
+    position:relative;
+  }
+  .hero .crest{
+    font-size:.78rem; letter-spacing:.14em; color:var(--teal);
+    text-transform:uppercase; margin-bottom:10px; font-weight:600;
+  }
+  .hero h1{
+    font-size:clamp(2.1rem, 5vw, 3.4rem);
+    font-weight:800; color:#ffdca8;
+    text-shadow:0 0 26px rgba(255,157,46,.55), 0 0 60px rgba(224,101,15,.25);
+    letter-spacing:.02em;
+  }
+  .hero p.tagline{
+    margin-top:10px; color:var(--ink-dim); font-size:1rem;
+    max-width:520px; margin-left:auto; margin-right:auto;
+  }
 
-        header {
-            max-width: 1000px;
-            margin: 0 auto 30px auto;
-            text-align: center;
-        }
+  .user-bar{
+    display:flex; justify-content:space-between; align-items:center; gap:12px;
+    background:var(--panel); backdrop-filter:blur(10px);
+    padding:12px 18px; border-radius:var(--radius-md);
+    border:1px solid var(--border); margin-bottom:16px; flex-wrap:wrap;
+  }
+  .user-info{display:flex; align-items:center; gap:12px; min-height:45px;}
+  .avatar{width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid var(--amber); background:#1a1430;}
+  .avatar-placeholder{
+    width:44px; height:44px; border-radius:50%; border:2px solid var(--amber);
+    background:linear-gradient(135deg,var(--amber),var(--amber-deep));
+    display:flex; align-items:center; justify-content:center; font-weight:700; color:#1a1002;
+  }
+  .badge-admin{
+    background:linear-gradient(135deg,var(--danger),var(--danger-deep)); color:#fff;
+    padding:2px 9px; border-radius:6px; font-size:.68rem; font-weight:700; letter-spacing:.03em;
+    vertical-align:middle;
+  }
+  .username-line{display:flex; align-items:center; gap:8px; font-weight:600;}
+  .user-bio-line{font-size:.78rem; color:var(--ink-faint); max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .auth-buttons{display:flex; gap:8px; flex-wrap:wrap;}
 
-        h1 {
-            font-size: 3.2rem;
-            color: #ff9900;
-            text-shadow: 0 0 15px #ff9900, 0 0 30px #ff5500;
-            margin-bottom: 20px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-        }
+  .action-row{
+    display:flex; justify-content:center; gap:12px; margin-bottom:18px; flex-wrap:wrap;
+  }
 
-        .user-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(15, 23, 42, 0.8);
-            padding: 10px 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 153, 0, 0.3);
-        }
+  .search-wrap{max-width:560px; margin:0 auto 30px;}
+  .search-bar{
+    width:100%; padding:13px 20px; font-size:15px; border-radius:999px;
+    border:1.5px solid var(--border); background:var(--panel-solid); color:var(--ink);
+    outline:none; transition:border-color .2s, box-shadow .2s;
+  }
+  .search-bar:focus{border-color:var(--amber); box-shadow:0 0 0 4px rgba(255,157,46,.15);}
+  .search-bar::placeholder{color:var(--ink-faint);}
 
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+  /* ---------- buttons ---------- */
+  .btn{
+    border:none; border-radius:999px; font-weight:700; font-size:.86rem;
+    padding:10px 20px; cursor:pointer; font-family:'Inter',sans-serif;
+    transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
+    color:#fff;
+  }
+  .btn:active{transform:translateY(1px) scale(.98);}
+  .btn:disabled{opacity:.55; cursor:not-allowed;}
+  .btn-amber{background:linear-gradient(135deg,var(--amber),var(--amber-deep)); box-shadow:0 4px 16px rgba(255,157,46,.3); color:#1a1002;}
+  .btn-amber:hover{box-shadow:0 6px 22px rgba(255,157,46,.5); transform:translateY(-1px);}
+  .btn-ghost{background:#1a2033; border:1px solid var(--border);}
+  .btn-ghost:hover{border-color:var(--amber);}
+  .btn-danger-outline{background:transparent; border:1.5px solid var(--danger); color:var(--danger);}
+  .btn-danger-outline:hover{background:var(--danger); color:#fff;}
+  .btn-block{width:100%;}
+  .btn-sm{padding:8px 14px; font-size:.8rem;}
 
-        .avatar {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #ff9900;
-        }
+  /* ---------- section titles ---------- */
+  .section-title{
+    max-width:1180px; margin:34px auto 16px; font-size:1.5rem; color:#ffcc7a;
+    display:flex; align-items:center; gap:10px; font-weight:700;
+  }
+  .section-title .count{
+    font-family:'Inter',sans-serif; font-size:.72rem; font-weight:600; color:var(--ink-faint);
+    background:#1a2033; border:1px solid var(--border); padding:3px 9px; border-radius:999px;
+  }
+  .divider{border:0; height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent); max-width:1180px; margin:34px auto;}
 
-        .badge-admin {
-            background: #ef4444;
-            color: #fff;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: bold;
-        }
+  /* ---------- modals ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(4,6,14,.72); backdrop-filter:blur(3px);
+    display:none; align-items:flex-start; justify-content:center; z-index:200;
+    padding:60px 16px; overflow-y:auto;
+  }
+  .overlay.open{display:flex; animation:fadeIn .18s ease;}
+  @keyframes fadeIn{from{opacity:0} to{opacity:1}}
+  .modal{
+    background:var(--panel-solid); border:1px solid var(--border); border-radius:var(--radius-lg);
+    padding:26px; width:100%; max-width:460px; box-shadow:0 20px 60px rgba(0,0,0,.6);
+    animation:riseIn .22s cubic-bezier(.2,.9,.3,1);
+  }
+  @keyframes riseIn{from{opacity:0; transform:translateY(14px) scale(.98)} to{opacity:1; transform:none}}
+  .modal.wide{max-width:620px;}
+  .modal h2{color:var(--amber); font-size:1.3rem; margin-bottom:16px; text-align:center;}
+  .modal h2.danger{color:var(--danger);}
+  .field{margin-bottom:13px;}
+  .field label{display:block; font-size:.82rem; color:var(--ink-dim); margin-bottom:5px; font-weight:500;}
+  .field input, .field textarea, .field select{
+    width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--border);
+    background:#0a0f1c; color:#fff; font-size:14px; font-family:'Inter',sans-serif; outline:none;
+    transition:border-color .15s;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus{border-color:var(--amber);}
+  .field-hint{font-size:.72rem; color:var(--ink-faint); margin-top:4px;}
+  .modal-actions{display:flex; gap:10px; margin-top:16px;}
+  .modal-actions .btn{flex:1;}
 
-        .header-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
+  /* ---------- admin panel ---------- */
+  .admin-panel-wrap{max-width:820px; margin:0 auto 30px; display:none;}
+  .admin-panel-wrap.open{display:block; animation:riseIn .22s ease;}
+  .admin-panel{
+    background:var(--panel-solid); border:1.5px solid var(--danger-deep); border-radius:var(--radius-lg);
+    padding:24px; box-shadow:0 10px 40px rgba(164,40,58,.15);
+  }
+  .admin-panel h2{color:var(--danger); text-align:center; margin-bottom:6px;}
+  .admin-sub{color:var(--ink-faint); text-align:center; font-size:.8rem; margin-bottom:18px;}
+  .admin-panel h3{color:var(--amber); font-size:1rem; margin:18px 0 10px;}
+  .pending-item, .user-card{
+    background:#0a0f1c; border:1px solid var(--border); padding:14px; border-radius:var(--radius-md); margin-bottom:12px;
+  }
+  .pending-item h4{color:var(--amber); font-size:1rem; margin-bottom:4px;}
+  .pending-meta{font-size:.8rem; color:var(--ink-faint); margin-bottom:8px;}
+  .pending-desc{font-size:.9rem; color:var(--ink); margin-bottom:10px;}
+  .pending-actions{display:flex; gap:8px; flex-wrap:wrap;}
+  .empty-msg{text-align:center; color:var(--ink-faint); padding:20px; font-size:.9rem;}
 
-        .search-bar-container {
-            max-width: 600px;
-            margin: 0 auto 20px auto;
-        }
+  .user-card-top{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;}
+  .user-role{color:var(--amber); font-weight:600;}
+  .ban-flag{color:var(--danger); font-weight:700; font-size:.78rem;}
+  .user-bio-box{
+    font-size:.82rem; color:var(--ink-dim); background:rgba(255,255,255,.04);
+    padding:7px 10px; border-radius:6px; font-style:italic; margin:8px 0;
+  }
+  .user-stat{color:var(--teal); font-size:.82rem;}
+  .user-card-actions{display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;}
 
-        .search-bar {
-            width: 100%;
-            padding: 14px 20px;
-            font-size: 16px;
-            border-radius: 30px;
-            border: 2px solid #ff9900;
-            background: rgba(15, 23, 42, 0.9);
-            color: #fff;
-            outline: none;
-            box-shadow: 0 0 15px rgba(255, 153, 0, 0.3);
-            transition: all 0.3s;
-        }
+  /* ---------- map grid ---------- */
+  .maps-grid{
+    max-width:1180px; margin:0 auto; display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(270px, 1fr)); gap:22px;
+  }
+  .map-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-lg);
+    overflow:hidden; display:flex; flex-direction:column; position:relative;
+    transition:transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    opacity:0; transform:translateY(10px);
+    animation:cardIn .45s ease forwards;
+  }
+  @keyframes cardIn{to{opacity:1; transform:none;}}
+  .map-card:hover{transform:translateY(-4px); border-color:var(--amber); box-shadow:0 10px 30px rgba(255,157,46,.18);}
+  .top-badge{
+    position:absolute; top:10px; left:10px; z-index:2;
+    background:linear-gradient(135deg,#ffd76b,#e0650f); color:#1a1002; font-weight:800;
+    padding:4px 11px; border-radius:999px; font-size:.78rem; box-shadow:0 0 14px rgba(255,215,107,.55);
+  }
+  .map-thumb{width:100%; height:150px; object-fit:cover; background:#0a0f1c; display:block;}
+  .map-thumb-fallback{
+    width:100%; height:150px; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,#1a1430,#0c1a27); color:var(--amber); font-family:'Cinzel',serif;
+    font-size:.95rem; text-align:center; padding:10px;
+  }
+  .map-content{padding:14px 16px; flex-grow:1;}
+  .map-header-flex{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+  .map-title{font-size:1.12rem; color:#ffd18c; font-family:'Cinzel',serif; font-weight:700; line-height:1.25;}
+  .version-badge{
+    background:#132433; color:var(--teal); font-size:.7rem; padding:3px 8px; border-radius:6px;
+    font-weight:700; white-space:nowrap; border:1px solid rgba(56,214,214,.25);
+  }
+  .map-author{font-size:.8rem; color:var(--ink-faint); margin:6px 0 8px;}
+  .map-desc{font-size:.9rem; color:var(--ink-dim); line-height:1.45;}
+  .map-actions{padding:14px 16px; background:rgba(2,6,23,.5); display:flex; flex-direction:column; gap:9px;}
+  .like-row{display:flex; align-items:center; justify-content:space-between;}
+  .btn-heart{
+    background:transparent; border:1.5px solid var(--danger); color:var(--danger);
+    padding:6px 14px; border-radius:999px; cursor:pointer; font-weight:700; font-size:.85rem;
+    display:flex; align-items:center; gap:6px; transition:all .18s;
+  }
+  .btn-heart:hover{background:var(--danger); color:#fff;}
+  .btn-heart.liked{background:var(--danger); color:#fff;}
+  .btn-download{
+    background:linear-gradient(135deg,var(--ok),var(--ok-deep)); color:#04180c; text-align:center;
+    padding:10px; border-radius:var(--radius-sm); font-weight:700; border:none; cursor:pointer; width:100%;
+    transition:transform .15s;
+  }
+  .btn-download:hover{transform:scale(1.015);}
+  .owner-actions{display:flex; gap:8px;}
+  .owner-actions .btn{flex:1; padding:8px; font-size:.78rem;}
 
-        .search-bar:focus {
-            box-shadow: 0 0 25px rgba(255, 153, 0, 0.7);
-        }
+  /* ---------- toasts ---------- */
+  #toastContainer{position:fixed; top:18px; right:18px; z-index:400; display:flex; flex-direction:column; gap:10px; max-width:320px;}
+  .toast{
+    padding:13px 16px; border-radius:var(--radius-md); font-size:.86rem; font-weight:500;
+    color:#fff; box-shadow:0 10px 28px rgba(0,0,0,.4); animation:toastIn .22s ease, toastOut .22s ease 2.6s forwards;
+    border:1px solid rgba(255,255,255,.12);
+  }
+  .toast.success{background:linear-gradient(135deg,var(--ok-deep),#125c37);}
+  .toast.error{background:linear-gradient(135deg,var(--danger-deep),#7a1c2b);}
+  .toast.info{background:linear-gradient(135deg,#1e3a5f,#16283e);}
+  @keyframes toastIn{from{opacity:0; transform:translateX(30px)} to{opacity:1; transform:none}}
+  @keyframes toastOut{to{opacity:0; transform:translateX(30px)}}
 
-        .btn-main, .btn-small {
-            background: linear-gradient(135deg, #ff9900 0%, #e65c00 100%);
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            font-size: 14px;
-            font-weight: bold;
-            border-radius: 20px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(255, 153, 0, 0.4);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
+  /* ---------- misc ---------- */
+  .loading-center{text-align:center; padding:60px 20px; color:var(--ink-faint); grid-column:1/-1;}
+  .spinner{
+    width:34px; height:34px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--amber);
+    animation:spin .7s linear infinite; margin:0 auto 12px;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .hint-note{text-align:center; font-size:.75rem; color:var(--ink-faint); max-width:1180px; margin:0 auto 10px;}
 
-        .btn-main:hover, .btn-small:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 153, 0, 0.7);
-        }
-
-        .btn-admin-toggle {
-            background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%);
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            font-size: 14px;
-            font-weight: bold;
-            border-radius: 20px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .btn-admin-toggle:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.7);
-        }
-
-        .section-title {
-            max-width: 1200px;
-            margin: 30px auto 15px auto;
-            font-size: 1.8rem;
-            color: #ffcc00;
-            text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .form-modal, .admin-panel {
-            display: none;
-            max-width: 650px;
-            margin: 20px auto;
-            background: rgba(15, 23, 42, 0.95);
-            border: 2px solid #ff9900;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-        }
-
-        .admin-panel {
-            border-color: #ef4444;
-        }
-
-        .form-modal h2, .admin-panel h2 {
-            color: #ff9900;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .admin-panel h2 {
-            color: #ef4444;
-        }
-
-        .form-group {
-            margin-bottom: 12px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 0.9rem;
-            color: #cbd5e1;
-            margin-bottom: 4px;
-        }
-
-        .form-group input, .form-group textarea, .form-group select {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #334155;
-            background: #020617;
-            color: #fff;
-            font-size: 14px;
-        }
-
-        .maps-grid {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 25px;
-        }
-
-        .map-card {
-            background: rgba(15, 23, 42, 0.85);
-            border: 1px solid rgba(255, 153, 0, 0.2);
-            border-radius: 12px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            position: relative;
-        }
-
-        .map-card:hover {
-            transform: translateY(-5px);
-            border-color: #ff9900;
-            box-shadow: 0 8px 25px rgba(255, 153, 0, 0.4);
-        }
-
-        .top-badge {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: linear-gradient(135deg, #ffd700, #ff8c00);
-            color: #000;
-            font-weight: bold;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
-            z-index: 2;
-        }
-
-        .map-card img {
-            width: 100%;
-            height: 160px;
-            object-fit: cover;
-        }
-
-        .map-content {
-            padding: 15px;
-            flex-grow: 1;
-        }
-
-        .map-header-flex {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 10px;
-        }
-
-        .map-title {
-            font-size: 1.25rem;
-            color: #ff9900;
-        }
-
-        .version-badge {
-            background: #334155;
-            color: #38bdf8;
-            font-size: 0.75rem;
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-weight: bold;
-            white-space: nowrap;
-        }
-
-        .map-author {
-            font-size: 0.85rem;
-            color: #94a3b8;
-            margin: 6px 0 10px 0;
-        }
-
-        .map-desc {
-            font-size: 0.95rem;
-            color: #e2e8f0;
-            line-height: 1.4;
-        }
-
-        .map-actions {
-            padding: 15px;
-            background: rgba(2, 6, 23, 0.6);
-            display: flex;
-            gap: 8px;
-            flex-direction: column;
-        }
-
-        .like-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-
-        .btn-heart {
-            background: transparent;
-            border: 2px solid #ff4757;
-            color: #ff4757;
-            padding: 6px 14px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
-        }
-
-        .btn-heart:hover {
-            background: #ff4757;
-            color: #fff;
-            box-shadow: 0 0 10px rgba(255, 71, 87, 0.6);
-        }
-
-        .btn-download {
-            background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
-            color: white;
-            text-align: center;
-            padding: 10px;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-            transition: transform 0.2s;
-            display: block;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-        }
-
-        .btn-download:hover { transform: scale(1.02); }
-
-        .btn-test {
-            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-            color: white;
-            text-align: center;
-            padding: 8px;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-            display: inline-block;
-            font-size: 0.85rem;
-        }
-
-        .btn-group-author {
-            display: flex;
-            gap: 5px;
-        }
-
-        .btn-edit, .btn-delete, .btn-approve, .btn-reject, .btn-ban {
-            flex: 1;
-            padding: 8px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            color: white;
-        }
-
-        .btn-edit { background: #3b82f6; }
-        .btn-delete { background: #ef4444; }
-        .btn-approve { background: #22c55e; }
-        .btn-reject { background: #dc2626; }
-        .btn-ban { background: #f59e0b; }
-        
-        .user-card {
-            background: #020617;
-            border: 1px solid #334155;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .user-card-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .user-bio {
-            font-size: 0.85rem;
-            color: #cbd5e1;
-            background: rgba(255,255,255,0.05);
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-style: italic;
-        }
-    </style>
+  @media (max-width:560px){
+    .user-bar{flex-direction:column; align-items:stretch;}
+    .auth-buttons{justify-content:center;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;}
+  }
+</style>
 </head>
 <body>
 
-    <header>
-        <h1>MAPY PRZYGODA</h1>
-        
-        <div class="user-bar">
-            <div class="user-info" id="userInfoDisplay">
-                <span>Niezalogowany</span>
-            </div>
-            <div id="authButtons">
-                <button class="btn-small" onclick="openAuthModal('login')">Zaloguj się</button>
-                <button class="btn-small" onclick="openAuthModal('register')">Zarejestruj się</button>
-            </div>
-        </div>
-
-        <div class="header-buttons">
-            <button class="btn-main" onclick="toggleForm()">+ DODAJ NOWĄ MAPĘ</button>
-            <button class="btn-admin-toggle" id="btnAdminPanel" onclick="openAdminPanel()">🔒 PANEL ADMINA</button>
-        </div>
-
-        <div class="search-bar-container">
-            <input type="text" id="searchInput" class="search-bar" placeholder="Szukaj mapy po tytule..." onkeyup="filterMaps()">
-        </div>
-    </header>
-
-    <div class="form-modal" id="authForm">
-        <h2 id="authTitle">Logowanie</h2>
-        <div class="form-group" id="groupUsername">
-            <label>Nazwa użytkownika:</label>
-            <input type="text" id="authUsername">
-        </div>
-        <div class="form-group" id="groupEmail">
-            <label>Email:</label>
-            <input type="email" id="authEmail">
-        </div>
-        <div class="form-group" id="groupPassword">
-            <label>Hasło:</label>
-            <input type="password" id="authPassword">
-        </div>
-        <div class="form-group" id="groupAvatar">
-            <label>Link do Zdjęcia Profilowego (URL):</label>
-            <input type="text" id="authAvatar" placeholder="https://...">
-        </div>
-        <div class="form-group" id="groupBio">
-            <label>Opis Profilu (Bio):</label>
-            <textarea id="authBio" rows="2" placeholder="Napisz coś o sobie..."></textarea>
-        </div>
-        <button class="btn-main" style="width: 100%; margin-top: 10px;" id="authSubmitBtn" onclick="handleAuthSubmit()">ZATWIERDŹ</button>
-        <button class="btn-small" style="width: 100%; margin-top: 5px; background: #334155;" onclick="closeAuthModal()">ANULUJ</button>
-    </div>
-
-    <div class="form-modal" id="mapForm">
-        <h2 id="formTitle">Dodaj Mapę</h2>
-        <input type="hidden" id="editMapId">
-        
-        <div class="form-group">
-            <label>Nazwa Mapy:</label>
-            <input type="text" id="mapName" placeholder="Np. Epicka Przygoda v1">
-        </div>
-        <div class="form-group">
-            <label>Wersja Gry:</label>
-            <select id="mapVersion">
-                <option value="1.20+">1.20+</option>
-                <option value="1.19">1.19</option>
-                <option value="1.18">1.18</option>
-                <option value="1.16">1.16</option>
-                <option value="1.12">1.12</option>
-                <option value="Inna">Inna</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Hasło Mapy (do edycji/usuwania):</label>
-            <input type="password" id="mapPassword" placeholder="Wpisz tajne hasło">
-        </div>
-        <div class="form-group">
-            <label>Opis Mapy:</label>
-            <textarea id="mapDesc" rows="3" placeholder="Krótki opis przygody..."></textarea>
-        </div>
-        <div class="form-group">
-            <label>Link do Zdjęcia (URL):</label>
-            <input type="text" id="mapImg" placeholder="https://...">
-        </div>
-        <div class="form-group">
-            <label>Link do Pobrania Mapy (URL):</label>
-            <input type="text" id="mapFile" placeholder="https://...">
-        </div>
-
-        <button class="btn-main" style="width: 100%; margin-top: 10px;" onclick="saveMap()">ZAPISZ MAPĘ</button>
-    </div>
-
-    <div class="admin-panel" id="adminPanel">
-        <h2>🛠️ Panel Admina</h2>
-        
-        <h3 style="color: #ff9900; margin: 15px 0 10px 0;">Oczekujące Mapy</h3>
-        <div id="pendingMapsList"></div>
-
-        <hr style="border: 0; height: 1px; background: #334155; margin: 20px 0;">
-
-        <h3 style="color: #ff9900; margin: 15px 0 10px 0;">Zarządzanie Kontami i Profile</h3>
-        <div id="usersList"></div>
-
-        <button class="btn-main" style="width: 100%; margin-top: 15px; background: #334155;" onclick="closeAdminPanel()">ZAMKNIJ PANEL</button>
-    </div>
-
-    <div class="section-title">
-        <span>🏆 TOP 3 LUBIANE MAPY</span>
-    </div>
-    <div class="maps-grid" id="topMapsContainer"></div>
-
-    <hr style="border: 0; height: 1px; background: rgba(255, 153, 0, 0.3); max-width: 1200px; margin: 30px auto;">
-
-    <div class="section-title">
-        <span>🗺️ WSZYSTKIE MAPY</span>
-    </div>
-    <div class="maps-grid" id="allMapsContainer"></div>
-
-    <script>
-        let currentUser = JSON.parse(localStorage.getItem('adventure_hub_current_user') || 'null');
-        let currentAuthMode = 'login'; 
-
-        const initialMaps = [
-            {
-                id: 1,
-                name: "Epicka Przygoda v1",
-                version: "1.20+",
-                author: "wilkzx",
-                password: "123",
-                desc: "Świetna mapa przygodowa pełna zagadek!",
-                img: "https://via.placeholder.com/300x160/0f172a/ff9900?text=Epicka+Przygoda",
-                file: "https://example.com",
-                likes: 12,
-                approved: true
-            }
-        ];
-
-        function getUsers() {
-            let users = JSON.parse(localStorage.getItem('adventure_hub_users') || '[]');
-            
-            let index = users.findIndex(u => u.username === 'wilkzx');
-            if (index === -1) {
-                const adminWilkzx = {
-                    id: 999999,
-                    username: 'wilkzx',
-                    email: 'wilkzx@admin.pl',
-                    password: 'wilkzx',
-                    avatar: '',
-                    bio: 'Główny Administrator Strony!',
-                    role: 'admin',
-                    bannedUntil: null
-                };
-                users.push(adminWilkzx);
-            } else {
-                users[index].role = 'admin';
-            }
-
-            saveUsers(users);
-            return users;
-        }
-
-        function saveUsers(users) {
-            localStorage.setItem('adventure_hub_users', JSON.stringify(users));
-        }
-
-        function getMaps() {
-            const data = localStorage.getItem('adventure_hub_maps');
-            if (!data) {
-                localStorage.setItem('adventure_hub_maps', JSON.stringify(initialMaps));
-                return initialMaps;
-            }
-            return JSON.parse(data);
-        }
-
-        function saveMapsToStorage(maps) {
-            localStorage.setItem('adventure_hub_maps', JSON.stringify(maps));
-        }
-
-        function updateUIUser() {
-            const display = document.getElementById('userInfoDisplay');
-            const authBtns = document.getElementById('authButtons');
-
-            if (currentUser) {
-                const users = getUsers();
-                const freshUser = users.find(u => u.username === currentUser.username);
-                if (freshUser) currentUser = freshUser;
-
-                if (currentUser.bannedUntil && new Date().getTime() < currentUser.bannedUntil) {
-                    alert("Twoje konto jest zabanowane do: " + new Date(currentUser.bannedUntil).toLocaleString());
-                    logout();
-                    return;
-                }
-
-                const avatarSrc = currentUser.avatar || 'https://via.placeholder.com/45/ff9900/000?text=U';
-                const adminBadge = currentUser.role === 'admin' ? '<span class="badge-admin">ADMIN</span>' : '';
-                
-                display.innerHTML = `
-                    <img src="${avatarSrc}" class="avatar">
-                    <div>
-                        <b>${currentUser.username}</b> ${adminBadge}
-                        <div style="font-size:0.75rem; color:#94a3b8;">${currentUser.bio || 'Brak opisu'}</div>
-                    </div>
-                `;
-
-                authBtns.innerHTML = `
-                    <button class="btn-small" onclick="openAuthModal('edit')">Edytuj Profil</button>
-                    <button class="btn-small" style="background: #dc2626;" onclick="logout()">Wyloguj</button>
-                `;
-            } else {
-                display.innerHTML = `<span>Niezalogowany</span>`;
-                authBtns.innerHTML = `
-                    <button class="btn-small" onclick="openAuthModal('login')">Zaloguj się</button>
-                    <button class="btn-small" onclick="openAuthModal('register')">Zarejestruj się</button>
-                `;
-            }
-        }
-
-        function openAuthModal(mode) {
-            currentAuthMode = mode;
-            const form = document.getElementById('authForm');
-            const title = document.getElementById('authTitle');
-            
-            document.getElementById('groupUsername').style.display = 'block';
-            document.getElementById('groupPassword').style.display = 'block';
-            document.getElementById('groupEmail').style.display = (mode === 'login') ? 'none' : 'block';
-            document.getElementById('groupAvatar').style.display = (mode === 'login') ? 'none' : 'block';
-            document.getElementById('groupBio').style.display = (mode === 'login') ? 'none' : 'block';
-
-            if (mode === 'login') {
-                title.innerText = 'Logowanie';
-            } else if (mode === 'register') {
-                title.innerText = 'Rejestracja Konta';
-            } else if (mode === 'edit') {
-                title.innerText = 'Edycja Profilu';
-                document.getElementById('authUsername').value = currentUser.username;
-                document.getElementById('authUsername').disabled = true;
-                document.getElementById('authEmail').value = currentUser.email || '';
-                document.getElementById('authAvatar').value = currentUser.avatar || '';
-                document.getElementById('authBio').value = currentUser.bio || '';
-            }
-
-            form.style.display = 'block';
-        }
-
-        function closeAuthModal() {
-            document.getElementById('authForm').style.display = 'none';
-            document.getElementById('authUsername').disabled = false;
-            document.getElementById('authUsername').value = '';
-            document.getElementById('authEmail').value = '';
-            document.getElementById('authPassword').value = '';
-            document.getElementById('authAvatar').value = '';
-            document.getElementById('authBio').value = '';
-        }
-
-        function handleAuthSubmit() {
-            const username = document.getElementById('authUsername').value.trim();
-            const email = document.getElementById('authEmail').value.trim();
-            const password = document.getElementById('authPassword').value.trim();
-            const avatar = document.getElementById('authAvatar').value.trim();
-            const bio = document.getElementById('authBio').value.trim();
-
-            let users = getUsers();
-
-            if (currentAuthMode === 'register') {
-                if (!username || !email || !password) {
-                    alert('Wypełnij nazwę użytkownika, email oraz hasło!');
-                    return;
-                }
-
-                if (users.some(u => u.username === username)) {
-                    alert('Użytkownik o takiej nazwie już istnieje!');
-                    return;
-                }
-
-                const newUser = {
-                    id: Date.now(),
-                    username: username,
-                    email: email,
-                    password: password,
-                    avatar: avatar,
-                    bio: bio,
-                    role: username === 'wilkzx' ? 'admin' : 'user',
-                    bannedUntil: null
-                };
-
-                users.push(newUser);
-                saveUsers(users);
-                currentUser = newUser;
-                localStorage.setItem('adventure_hub_current_user', JSON.stringify(currentUser));
-                alert('Konto zostało pomyślnie zarejestrowane!');
-
-            } else if (currentAuthMode === 'login') {
-                const user = users.find(u => u.username === username && u.password === password);
-                
-                if (!user) {
-                    alert('Nieprawidłowa nazwa użytkownika lub hasło!');
-                    return;
-                }
-
-                if (user.bannedUntil && new Date().getTime() < user.bannedUntil) {
-                    alert("To konto jest zabanowane do: " + new Date(user.bannedUntil).toLocaleString());
-                    return;
-                }
-
-                currentUser = user;
-                localStorage.setItem('adventure_hub_current_user', JSON.stringify(currentUser));
-                alert('Pomyślnie zalogowano!');
-
-            } else if (currentAuthMode === 'edit') {
-                const index = users.findIndex(u => u.username === currentUser.username);
-                if (index !== -1) {
-                    if (password) users[index].password = password;
-                    users[index].email = email;
-                    users[index].avatar = avatar;
-                    users[index].bio = bio;
-
-                    currentUser = users[index];
-                    saveUsers(users);
-                    localStorage.setItem('adventure_hub_current_user', JSON.stringify(currentUser));
-                    alert('Profil zaktualizowany!');
-                }
-            }
-
-            closeAuthModal();
-            updateUIUser();
-            renderMaps();
-        }
-
-        function logout() {
-            currentUser = null;
-            localStorage.removeItem('adventure_hub_current_user');
-            closeAdminPanel();
-            updateUIUser();
-            renderMaps();
-        }
-
-        function toggleForm() {
-            if (!currentUser) {
-                alert("Musisz się zalogować, aby móc dodać nową mapę!");
-                openAuthModal('login');
-                return;
-            }
-            const form = document.getElementById('mapForm');
-            form.style.display = form.style.display === 'block' ? 'none' : 'block';
-            if (form.style.display === 'none') resetForm();
-        }
-
-        function resetForm() {
-            document.getElementById('editMapId').value = '';
-            document.getElementById('mapName').value = '';
-            document.getElementById('mapVersion').value = '1.20+';
-            document.getElementById('mapPassword').value = '';
-            document.getElementById('mapDesc').value = '';
-            document.getElementById('mapImg').value = '';
-            document.getElementById('mapFile').value = '';
-            document.getElementById('formTitle').innerText = 'Dodaj Mapę';
-        }
-
-        function saveMap() {
-            const id = document.getElementById('editMapId').value;
-            const name = document.getElementById('mapName').value.trim();
-            const version = document.getElementById('mapVersion').value;
-            const password = document.getElementById('mapPassword').value.trim();
-            const desc = document.getElementById('mapDesc').value.trim();
-            const img = document.getElementById('mapImg').value.trim();
-            const file = document.getElementById('mapFile').value.trim();
-
-            if (!name || !password) {
-                alert('Wypełnij: Nazwę Mapy i Hasło!');
-                return;
-            }
-
-            let maps = getMaps();
-
-            if (id) {
-                const index = maps.findIndex(m => m.id == id);
-                if (index !== -1) {
-                    maps[index].name = name;
-                    maps[index].version = version;
-                    maps[index].desc = desc;
-                    maps[index].img = img;
-                    maps[index].file = file;
-                    alert('Mapa została zaktualizowana!');
-                }
-            } else {
-                const newMap = {
-                    id: Date.now(),
-                    name: name,
-                    version: version,
-                    author: currentUser.username,
-                    password: password,
-                    desc: desc,
-                    img: img,
-                    file: file,
-                    likes: 0,
-                    approved: false
-                };
-                maps.push(newMap);
-                alert('Mapa wysłana! Pojawi się na stronie po zatwierdzeniu przez Admina.');
-            }
-
-            saveMapsToStorage(maps);
-            resetForm();
-            toggleForm();
-            renderMaps();
-        }
-
-        function addLike(id) {
-            if (!currentUser) {
-                alert("Musisz być zalogowany, aby móc polubić mapę!");
-                openAuthModal('login');
-                return;
-            }
-
-            let maps = getMaps();
-            const index = maps.findIndex(m => m.id == id);
-            if (index !== -1) {
-                maps[index].likes = (maps[index].likes || 0) + 1;
-                saveMapsToStorage(maps);
-                renderMaps();
-            }
-        }
-
-        // POBIERANIE BEZ WYMOGU LOGOWANIA
-        function handleDownload(fileUrl) {
-            if (!fileUrl || fileUrl === '#') {
-                alert("Brak dodanego linku do pobrania.");
-                return;
-            }
-            window.open(fileUrl, '_blank');
-        }
-
-        function createCardHTML(map, isTopRank = null) {
-            const defaultImg = "https://via.placeholder.com/300x160/0f172a/ff9900?text=MAPY+PRZYGODA";
-            const topBadgeHTML = isTopRank ? `<div class="top-badge">TOP #${isTopRank}</div>` : '';
-
-            return `
-                <div class="map-card" data-title="${map.name.toLowerCase()}">
-                    ${topBadgeHTML}
-                    <div>
-                        <img src="${map.img || defaultImg}" alt="Ikona">
-                        <div class="map-content">
-                            <div class="map-header-flex">
-                                <h3 class="map-title">${map.name}</h3>
-                                <span class="version-badge">v${map.version || '1.20+'}</span>
-                            </div>
-                            <div class="map-author">Autor: <b>${map.author}</b></div>
-                            <p class="map-desc">${map.desc}</p>
-                        </div>
-                    </div>
-                    <div class="map-actions">
-                        <div class="like-bar">
-                            <button class="btn-heart" onclick="addLike(${map.id})">
-                                ❤️ <span>${map.likes || 0}</span>
-                            </button>
-                        </div>
-                        <button class="btn-download" onclick="handleDownload('${map.file || '#'}')">POBIERZ MAPĘ</button>
-                        <div class="btn-group-author">
-                            <button class="btn-edit" onclick="editMap(${map.id})">Edytuj</button>
-                            <button class="btn-delete" onclick="deleteMap(${map.id})">Usuń</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderMaps() {
-            const allContainer = document.getElementById('allMapsContainer');
-            const topContainer = document.getElementById('topMapsContainer');
-            
-            allContainer.innerHTML = '';
-            topContainer.innerHTML = '';
-
-            const maps = getMaps();
-            const approvedMaps = maps.filter(m => m.approved);
-
-            if (approvedMaps.length === 0) {
-                allContainer.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #94a3b8;">Brak zatwierdzonych map.</p>';
-                topContainer.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #94a3b8;">Brak najpopularniejszych map.</p>';
-                return;
-            }
-
-            approvedMaps.forEach(map => {
-                allContainer.innerHTML += createCardHTML(map);
-            });
-
-            const sortedMaps = [...approvedMaps].sort((a, b) => (b.likes || 0) - (a.likes || 0));
-            const top3 = sortedMaps.slice(0, 3);
-
-            top3.forEach((map, index) => {
-                topContainer.innerHTML += createCardHTML(map, index + 1);
-            });
-        }
-
-        function filterMaps() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const cards = document.querySelectorAll('#allMapsContainer .map-card');
-
-            cards.forEach(card => {
-                const title = card.getAttribute('data-title');
-                if (title.includes(query)) {
-                    card.style.display = 'flex';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        }
-
-        function deleteMap(id) {
-            const maps = getMaps();
-            const map = maps.find(m => m.id == id);
-
-            if (!map) return;
-
-            const inputPass = prompt("Wpisz Hasło Mapy, aby ją usunąć:");
-            if (inputPass === map.password) {
-                const up
+<div id="toastContainer"></div>
+
+<header class="top">
+  <div class="hero">
+    <div class="crest">Wspólnota budowniczych</div>
+    <h1>Mapy Przygoda</h1>
+    <p class="tagline">Publikuj, testuj i pobieraj mapy przygodowe do Minecrafta zrobione przez graczy dla graczy.</p>
+  </div>
+
+  <div class="user-bar">
+    <div class="user-info" id="userInfoDisplay"><span style="color:var(--ink-faint)">Wczytywanie…</span></div>
+    <div class="auth-buttons" id="authButtons"></div>
+  </div>
+
+  <div class="action-row">
+    <button class="btn btn-amber" onclick="onAddMapClick()">+ Dodaj nową mapę</button>
+    <button class="btn btn-danger-outline" onclick="onAdminClick()">🔒 Panel admina</button>
+  </div>
+
+  <div class="search-wrap">
+    <input type="text" id="searchInput" class="search-bar" placeholder="Szukaj mapy po tytule…" oninput="filterMaps()">
+  </div>
+</header>
+
+<!-- AUTH MODAL -->
+<div class="overlay" id="authOverlay">
+  <div class="modal">
+    <h2 id="authTitle">Logowanie</h2>
+    <div class="field" id="groupUsername">
+      <label>Nazwa użytkownika</label>
+      <input type="text" id="authUsername" autocomplete="username">
+    </div>
+    <div class="field" id="groupEmail">
+      <label>Email</label>
+      <input type="email" id="authEmail" autocomplete="email">
+    </div>
+    <div class="field" id="groupPassword">
+      <label>Hasło</label>
+      <input type="password" id="authPassword" autocomplete="current-password">
+    </div>
+    <div class="field" id="groupAvatar">
+      <label>Link do zdjęcia profilowego (URL)</label>
+      <input type="text" id="authAvatar" placeholder="https://…">
+    </div>
+    <div class="field" id="groupBio">
+      <label>Opis profilu</label>
+      <textarea id="authBio" rows="2" placeholder="Napisz coś o sobie…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeAuthModal()">Anuluj</button>
+      <button class="btn btn-amber" id="authSubmitBtn" onclick="handleAuthSubmit()">Zatwierdź</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAP FORM MODAL -->
+<div class="overlay" id="mapOverlay">
+  <div class="modal wide">
+    <h2 id="formTitle">Dodaj mapę</h2>
+    <input type="hidden" id="editMapId">
+    <div class="field">
+      <label>Nazwa mapy</label>
+      <input type="text" id="mapName" placeholder="Np. Epicka Przygoda v1">
+    </div>
+    <div class="field">
+      <label>Wersja gry</label>
+      <select id="mapVersion">
+        <option value="1.21+">1.21+</option>
+        <option value="1.20">1.20</option>
+        <option value="1.19">1.19</option>
+        <option value="1.18">1.18</option>
+        <option value="1.16">1.16</option>
+        <option value="1.12">1.12</option>
+        <option value="Inna">Inna</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Hasło mapy (do edycji / usuwania)</label>
+      <input type="password" id="mapPassword" placeholder="Wpisz tajne hasło">
+      <div class="field-hint">Zapamiętaj je — będzie potrzebne, żeby później edytować lub usunąć tę mapę.</div>
+    </div>
+    <div class="field">
+      <label>Opis mapy</label>
+      <textarea id="mapDesc" rows="3" placeholder="Krótki opis przygody…"></textarea>
+    </div>
+    <div class="field">
+      <label>Link do zdjęcia (URL)</label>
+      <input type="text" id="mapImg" placeholder="https://…">
+    </div>
+    <div class="field">
+      <label>Link do pobrania mapy (URL)</label>
+      <input type="text" id="mapFile" placeholder="https://…">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeMapModal()">Anuluj</button>
+      <button class="btn btn-amber" onclick="saveMap()">Zapisz mapę</button>
+    </div>
+  </div>
+</div>
+
+<!-- GENERIC CONFIRM / PASSWORD-PROMPT MODAL -->
+<div class="overlay" id="promptOverlay">
+  <div class="modal" id="promptModal">
+    <h2 id="promptTitle">Potwierdź</h2>
+    <p id="promptMessage" style="color:var(--ink-dim); font-size:.92rem; margin-bottom:14px; text-align:center;"></p>
+    <div class="field" id="promptInputField" style="display:none;">
+      <input type="password" id="promptInput" placeholder="Hasło">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="promptCancelBtn">Anuluj</button>
+      <button class="btn btn-amber" id="promptOkBtn">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="admin-panel-wrap" id="adminPanelWrap">
+  <div class="admin-panel">
+    <h2>🛠️ Panel admina</h2>
+    <p class="admin-sub">Zatwierdzaj mapy i zarządzaj kontami użytkowników</p>
+
+    <h3>Oczekujące mapy</h3>
+    <div id="pendingMapsList"></div>
+
+    <hr style="border:0; height:1px; background:var(--border); margin:20px 0;">
+
+    <h3>Zarządzanie kontami</h3>
+    <div id="usersList"></div>
+
+    <button class="btn btn-ghost btn-block" style="margin-top:14px;" onclick="closeAdminPanel()">Zamknij panel</button>
+  </div>
+</div>
+
+<div class="section-title"><span>🏆 Top 3 lubiane mapy</span></div>
+<div class="maps-grid" id="topMapsContainer"><div class="loading-center"><div class="spinner"></div>Wczytywanie map…</div></div>
+
+<hr class="divider">
+
+<div class="section-title"><span>🗺️ Wszystkie mapy</span> <span class="count" id="allCount"></span></div>
+<div class="maps-grid" id="allMapsContainer"></div>
+
+<script>
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function escapeHtml(str){
+  if(str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function safeUrl(url){
+  if(!url) return '';
+  const trimmed = String(url).trim();
+  if(/^https?:\/\//i.test(trimmed)) return trimmed;
+  return '';
+}
+function showToast(message, type='info'){
+  const c = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = message;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+/* Promise-based confirm modal (replaces window.confirm, which cannot run here) */
+function showConfirm(message, {okLabel='Tak', cancelLabel='Anuluj', danger=false}={}){
+  return new Promise(resolve => {
+    const overlay = document.getElementById('promptOverlay');
+    document.getElementById('promptTitle').textContent = 'Potwierdź';
+    document.getElementById('promptMessage').textContent = message;
+    document.getElementById('promptInputField').style.display = 'none';
+    const okBtn = document.getElementById('promptOkBtn');
+    const cancelBtn = document.getElementById('promptCancelBtn');
+    okBtn.textContent = okLabel;
+    okBtn.className = danger ? 'btn btn-danger-outline' : 'btn btn-amber';
+    cancelBtn.textContent = cancelLabel;
+
+    const cleanup = (result) => {
+      overlay.classList.remove('open');
+      okBtn.onclick = null; cancelBtn.onclick = null;
+      resolve(result);
+    };
+    okBtn.onclick = () => cleanup(true);
+    cancelBtn.onclick = () => cleanup(false);
+    overlay.classList.add('open');
+  });
+}
+
+/* Promise-based password prompt (replaces window.prompt) */
+function showPasswordPrompt(message){
+  return new Promise(resolve => {
+    const overlay = document.getElementById('promptOverlay');
+    document.getElementById('promptTitle').textContent = 'Wymagane hasło';
+    document.getElementById('promptMessage').textContent = message;
+    const inputField = document.getElementById('promptInputField');
+    const input = document.getElementById('promptInput');
+    inputField.style.display = 'block';
+    input.value = '';
+    const okBtn = document.getElementById('promptOkBtn');
+    const cancelBtn = document.getElementById('promptCancelBtn');
+    okBtn.textContent = 'Potwierdź';
+    okBtn.className = 'btn btn-amber';
+    cancelBtn.textContent = 'Anuluj';
+
+    const cleanup = (result) => {
+      overlay.classList.remove('open');
+      okBtn.onclick = null; cancelBtn.onclick = null;
+      input.onkeydown = null;
+      resolve(result);
+    };
+    okBtn.onclick = () => cleanup(input.value);
+    cancelBtn.onclick = () => cleanup(null);
+    input.onkeydown = (e) => { if(e.key === 'Enter') cleanup(input.value); };
+    overlay.classList.add('open');
+    setTimeout(() => input.focus(), 50);
+  });
+}
+
+/* ============================================================
+   STORAGE LAYER  (shared = visible to everyone using this page;
+   the current-session pointer stays personal to this browser/account)
+   ============================================================ */
+const MAPS_KEY = 'mapy_przygoda:maps';
+const USERS_KEY = 'mapy_przygoda:users';
+const SESSION_KEY = 'mapy_przygoda:session_username';
+
+const seedMaps = [
+  {
+    id: 1,
+    name: "Epicka Przygoda v1",
+    version: "1.20",
+    author: "wilkzx",
+    password: "123",
+    desc: "Świetna mapa przygodowa pełna zagadek i ukrytych skarbów!",
+    img: "",
+    file: "https://example.com",
+    likes: 12,
+    likedBy: [],
+    approved: true
+  }
+];
+
+async function loadMaps(){
+  try{
+    const res = await window.storage.get(MAPS_KEY, true);
+    return res ? JSON.parse(res.value) : null;
+  }catch(e){ return null; }
+}
+async function ensureMaps(){
+  let maps = await loadMaps();
+  if(!maps){
+    maps = seedMaps;
+    await window.storage.set(MAPS_KEY, JSON.stringify(maps), true);
+  }
+  return maps;
+}
+async function persistMaps(maps){
+  try{
+    const result = await window.storage.set(MAPS_KEY, JSON.stringify(maps), true);
+    if(!result) showToast('Nie udało się zapisać zmian. Spróbuj ponownie.', 'error');
+    return !!result;
+  }catch(e){
+    showToast('Błąd zapisu danych.', 'error');
+    return false;
+  }
+}
+
+async function loadUsers(){
+  try{
+    const res = await window.storage.get(USERS_KEY, true);
+    return res ? JSON.parse(res.value) : null;
+  }catch(e){ return null; }
+}
+async function ensureUsers(){
+  let users = await loadUsers();
+  if(!users) users = [];
+  const idx = users.findIndex(u => u.username === 'wilkzx');
+  if(idx === -1){
+    users.push({
+      id: 999999,
+      username: 'wilkzx',
+      email: 'wilkzx@mapyprzygoda.pl',
+      password: 'wilkzx',
+      avatar: '',
+      bio: 'Główny administrator strony!',
+      role: 'admin',
+      bannedUntil: null
+    });
+  } else {
+    users[idx].role = 'admin';
+  }
+  await window.storage.set(USERS_KEY, JSON.stringify(users), true);
+  return users;
+}
+async function persistUsers(users){
+  try{
+    const result = await window.storage.set(USERS_KEY, JSON.stringify(users), true);
+    if(!result) showToast('Nie udało się zapisać zmian konta.', 'error');
+    return !!result;
+  }catch(e){
+    showToast('Błąd zapisu danych.', 'error');
+    return false;
+  }
+}
+
+async function loadSessionUsername(){
+  try{
+    const res = await window.storage.get(SESSION_KEY, false);
+    return res ? res.value : null;
+  }catch(e){ return null; }
+}
+async function setSessionUsername(username){
+  try{
+    if(username === null){
+      await window.storage.delete(SESSION_KEY, false);
+    } else {
+      await window.storage.set(SESSION_KEY, username, false);
+    }
+  }catch(e){ /* non-fatal */ }
+}
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let currentUser = null;
+let currentAuthMode = 'login';
+let mapsCache = [];
+let usersCache = [];
+
+/* ============================================================
+   AUTH / USER UI
+   ============================================================ */
+async function initSession(){
+  usersCache = await ensureUsers();
+  const savedUsername = await loadSessionUsername();
+  if(savedUsername){
+    const found = usersCache.find(u => u.username === savedUsername);
+    if(found){
+      if(found.bannedUntil && Date.now() < found.bannedUntil){
+        showToast('To konto jest zabanowane do ' + new Date(found.bannedUntil).toLocaleString('pl-PL'), 'error');
+        await setSessionUsername(null);
+        currentUser = null;
+      } else {
+        currentUser = found;
+      }
+    }
+  }
+  updateUIUser();
+}
+
+function updateUIUser(){
+  const display = document.getElementById('userInfoDisplay');
+  const authBtns = document.getElementById('authButtons');
+
+  if(currentUser){
+    const initials = escapeHtml(currentUser.username.slice(0,2).toUpperCase());
+    const avatarUrl = safeUrl(currentUser.avatar);
+    const avatarHtml = avatarUrl
+      ? `<img src="${escapeHtml(avatarUrl)}" class="avatar" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'avatar-placeholder',textContent:'${initials}'}))">`
+      : `<div class="avatar-placeholder">${initials}</div>`;
+    const adminBadge = currentUser.role === 'admin' ? '<span class="badge-admin">ADMIN</span>' : '';
+
+    display.innerHTML = `
+      ${avatarHtml}
+      <div>
+        <div class="username-line">${escapeHtml(currentUser.username)} ${adminBadge}</div>
+        <div class="user-bio-line">${escapeHtml(currentUser.bio || 'Brak opisu')}</div>
+      </div>`;
+
+    authBtns.innerHTML = `
+      <button class="btn btn-ghost btn-sm" onclick="openAuthModal('edit')">Edytuj profil</button>
+      <button class="btn btn-danger-outline btn-sm" onclick="logout()">Wyloguj</button>`;
+  } else {
+    display.innerHTML = `<span style="color:var(--ink-faint)">Niezalogowany</span>`;
+    authBtns.innerHTML = `
+      <button class="btn btn-ghost btn-sm" onclick="openAuthModal('login')">Zaloguj się</button>
+      <button class="btn btn-amber btn-sm" onclick="openAuthModal('register')">Zarejestruj się</button>`;
+  }
+}
+
+function openAuthModal(mode){
+  currentAuthMode = mode;
+  const overlay = document.getElementById('authOverlay');
+  const title = document.getElementById('authTitle');
+
+  document.getElementById('groupUsername').style.display = 'block';
+  document.getElementById('groupPassword').style.display = 'block';
+  document.getElementById('groupEmail').style.display = (mode === 'login') ? 'none' : 'block';
+  document.getElementById('groupAvatar').style.display = (mode === 'login') ? 'none' : 'block';
+  document.getElementById('groupBio').style.display = (mode === 'login') ? 'none' : 'block';
+
+  const usernameInput = document.getElementById('authUsername');
+  usernameInput.disabled = false;
+  usernameInput.value = '';
+  document.getElementById('authEmail').value = '';
+  document.getElementById('authPassword').value = '';
+  document.getElementById('authAvatar').value = '';
+  document.getElementById('authBio').value = '';
+
+  if(mode === 'login'){
+    title.textContent = 'Logowanie';
+  } else if(mode === 'register'){
+    title.textContent = 'Rejestracja konta';
+  } else if(mode === 'edit'){
+    title.textContent = 'Edycja profilu';
+    usernameInput.value = currentUser.username;
+    usernameInput.disabled = true;
+    document.getElementById('authEmail').value = currentUser.email || '';
+    document.getElementById('authAvatar').value = currentUser.avatar || '';
+    document.getElementById('authBio').value = currentUser.bio || '';
+    document.getElementById('groupPassword').querySelector('label').textContent = 'Nowe hasło (zostaw puste, aby nie zmieniać)';
+  }
+  if(mode !== 'edit'){
+    document.getElementById('groupPassword').querySelector('label').textContent = 'Hasło';
+  }
+
+  overlay.classList.add('open');
+}
+function closeAuthModal(){
+  document.getElementById('authOverlay').classList.remove('open');
+}
+
+async function handleAuthSubmit(){
+  const username = document.getElementById('authUsername').value.trim();
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value.trim();
+  const avatar = document.getElementById('authAvatar').value.trim();
+  const bio = document.getElementById('authBio').value.trim();
+
+  const btn = document.getElementById('authSubmitBtn');
+  btn.disabled = true;
+
+  try{
+    let users = usersCache.length ? usersCache : await ensureUsers();
+
+    if(currentAuthMode === 'register'){
+      if(!username || !email || !password){
+        showToast('Wypełnij nazwę użytkownika, email oraz hasło.', 'error');
+        return;
+      }
+      if(users.some(u => u.username.toLowerCase() === username.toLowerCase())){
+        showToast('Użytkownik o takiej nazwie już istnieje.', 'error');
+        return;
+      }
+      const newUser = {
+        id: Date.now(),
+        username, email, password, avatar, bio,
+        role: username === 'wilkzx' ? 'admin' : 'user',
+        bannedUntil: null
+      };
+      users.push(newUser);
+      const ok = await persistUsers(users);
+      if(!ok) return;
+      usersCache = users;
+      currentUser = newUser;
+      await setSessionUsername(username);
+      showToast('Konto zostało zarejestrowane!', 'success');
+
+    } else if(currentAuthMode === 'login'){
+      const user = users.find(u => u.username === username && u.password === password);
+      if(!user){
+        showToast('Nieprawidłowa nazwa użytkownika lub hasło.', 'error');
+        return;
+      }
+      if(user.bannedUntil && Date.now() < user.bannedUntil){
+        showToast('To konto jest zabanowane do ' + new Date(user.bannedUntil).toLocaleString('pl-PL'), 'error');
+        return;
+      }
+      currentUser = user;
+      await setSessionUsername(username);
+      showToast('Zalogowano pomyślnie!', 'success');
+
+    } else if(currentAuthMode === 'edit'){
+      const idx = users.findIndex(u => u.username === currentUser.username);
+      if(idx !== -1){
+        if(password) users[idx].password = password;
+        users[idx].email = email;
+        users[idx].avatar = avatar;
+        users[idx].bio = bio;
+        const ok = await persistUsers(users);
+        if(!ok) return;
+        usersCache = users;
+        currentUser = users[idx];
+        showToast('Profil zaktualizowany!', 'success');
+      }
+    }
+
+    closeAuthModal();
+    updateUIUser();
+    renderMaps();
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function logout(){
+  currentUser = null;
+  await setSessionUsername(null);
+  closeAdminPanel();
+  updateUIUser();
+  renderMaps();
+  showToast('Wylogowano.', 'info');
+}
+
+/* ============================================================
+   MAP FORM
+   ============================================================ */
+function onAddMapClick(){
+  if(!currentUser){
+    showToast('Musisz się zalogować, aby dodać nową mapę.', 'error');
+    openAuthModal('login');
+    return;
+  }
+  resetMapForm();
+  document.getElementById('mapOverlay').classList.add('open');
+}
+function closeMapModal(){
+  document.getElementById('mapOverlay').classList.remove('open');
+}
+function resetMapForm(){
+  document.getElementById('editMapId').value = '';
+  document.getElementById('mapName').value = '';
+  document.getElementById('mapVersion').value = '1.21+';
+  document.getElementById('mapPassword').value = '';
+  document.getElementById('mapDesc').value = '';
+  document.getElementById('mapImg').value = '';
+  document.getElementById('mapFile').value = '';
+  document.getElementById('formTitle').textContent = 'Dodaj mapę';
+}
+
+async function saveMap(){
+  const id = document.getElementById('editMapId').value;
+  const name = document.getElementById('mapName').value.trim();
+  const version = document.getElementById('mapVersion').value;
+  const password = document.getElementById('mapPassword').value.trim();
+  const desc = document.getElementById('mapDesc').value.trim();
+  const img = document.getElementById('mapImg').value.trim();
+  const file = document.getElementById('mapFile').value.trim();
+
+  if(!name || !password){
+    showToast('Wypełnij nazwę mapy i hasło.', 'error');
+    return;
+  }
+
+  let maps = mapsCache.length ? mapsCache : await ensureMaps();
+
+  if(id){
+    const idx = maps.findIndex(m => m.id == id);
+    if(idx !== -1){
+      maps[idx].name = name;
+      maps[idx].version = version;
+      maps[idx].desc = desc;
+      maps[idx].img = img;
+      maps[idx].file = file;
+      const ok = await persistMaps(maps);
+      if(!ok) return;
+      showToast('Mapa została zaktualizowana!', 'success');
+    }
+  } else {
+    const newMap = {
+      id: Date.now(),
+      name, version, author: currentUser.username, password, desc, img, file,
+      likes: 0, likedBy: [], approved: false
+    };
+    maps.push(newMap);
+    const ok = await persistMaps(maps);
+    if(!ok) return;
+    showToast('Mapa wysłana! Pojawi się na stronie po zatwierdzeniu przez admina.', 'success');
+  }
+
+  mapsCache = maps;
+  closeMapModal();
+  renderMaps();
+}
+
+async function addLike(id){
+  if(!currentUser){
+    showToast('Musisz być zalogowany, aby polubić mapę.', 'error');
+    openAuthModal('login');
+    return;
+  }
+  let maps = mapsCache.length ? mapsCache : await ensureMaps();
+  const idx = maps.findIndex(m => m.id == id);
+  if(idx === -1) return;
+
+  if(!Array.isArray(maps[idx].likedBy)) maps[idx].likedBy = [];
+  const already = maps[idx].likedBy.includes(currentUser.username);
+
+  if(already){
+    maps[idx].likedBy = maps[idx].likedBy.filter(u => u !== currentUser.username);
+    maps[idx].likes = Math.max(0, (maps[idx].likes || 0) - 1);
+  } else {
+    maps[idx].likedBy.push(currentUser.username);
+    maps[idx].likes = (maps[idx].likes || 0) + 1;
+  }
+  const ok = await persistMaps(maps);
+  if(!ok) return;
+  mapsCache = maps;
+  renderMaps();
+}
+
+function handleDownload(fileUrl){
+  const url = safeUrl(fileUrl);
+  if(!url){
+    showToast('Brak dodanego linku do pobrania.', 'error');
+    return;
+  }
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+async function deleteMap(id){
+  const maps = mapsCache.length ? mapsCache : await ensureMaps();
+  const map = maps.find(m => m.id == id);
+  if(!map) return;
+
+  const inputPass = await showPasswordPrompt('Wpisz hasło mapy „' + map.name + '”, aby ją usunąć:');
+  if(inputPass === null) return;
+  if(inputPass !== map.password){
+    showToast('Błędne hasło.', 'error');
+    return;
+  }
+  const updated = maps.filter(m => m.id != id);
+  const ok = await persistMaps(updated);
+  if(!ok) return;
+  mapsCache = updated;
+  renderMaps();
+  showToast('Mapa usunięta.', 'success');
+}
+
+async function editMap(id){
+  const maps = mapsCache.length ? mapsCache : await ensureMaps();
+  const map = maps.find(m => m.id == id);
+  if(!map) return;
+
+  const inputPass = await showPasswordPrompt('Wpisz hasło mapy „' + map.name + '”, aby ją edytować:');
+  if(inputPass === null) return;
+  if(inputPass !== map.password){
+    showToast('Błędne hasło.', 'error');
+    return;
+  }
+
+  document.getElementById('editMapId').value = map.id;
+  document.getElementById('mapName').value = map.name;
+  document.getElementById('mapVersion').value = map.version || '1.21+';
+  document.getElementById('mapPassword').value = map.password;
+  document.getElementById('mapDesc').value = map.desc;
+  document.getElementById('mapImg').value = map.img;
+  document.getElementById('mapFile').value = map.file;
+  document.getElementById('formTitle').textContent = 'Edytuj mapę';
+  document.getElementById('mapOverlay').classList.add('open');
+}
+
+/* ============================================================
+   RENDERING
+   ============================================================ */
+function createCardHTML(map, rank){
+  const imgUrl = safeUrl(map.img);
+  const thumb = imgUrl
+    ? `<img src="${escapeHtml(imgUrl)}" class="map-thumb" alt="Miniatura mapy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'map-thumb-fallback',textContent:'🗺️ ${escapeHtml(map.name)}'}))">`
+    : `<div class="map-thumb-fallback">🗺️ ${escapeHtml(map.name)}</div>`;
+  const topBadge = rank ? `<div class="top-badge">TOP #${rank}</div>` : '';
+  const liked = currentUser && Array.isArray(map.likedBy) && map.likedBy.includes(currentUser.username);
+  const isOwner = currentUser && currentUser.username === map.author;
+  const isAdmin = currentUser && currentUser.role === 'admin';
+
+  const ownerActions = (isOwner || isAdmin) ? `
+    <div class="owner-actions">
+      <button class="btn btn-ghost btn-sm" onclick="editMap(${map.id})">Edytuj</button>
+      <button class="btn btn-danger-outline btn-sm" onclick="deleteMap(${map.id})">Usuń</button>
+    </div>` : '';
+
+  return `
+    <div class="map-card" data-title="${escapeHtml(map.name.toLowerCase())}">
+      ${topBadge}
+      ${thumb}
+      <div class="map-content">
+        <div class="map-header-flex">
+          <h3 class="map-title">${escapeHtml(map.name)}</h3>
+          <span class="version-badge">v${escapeHtml(map.version || '1.21+')}</span>
+        </div>
+        <div class="map-author">Autor: <b>${escapeHtml(map.author)}</b></div>
+        <p class="map-desc">${escapeHtml(map.desc)}</p>
+      </div>
+      <div class="map-actions">
+        <div class="like-row">
+          <button class="btn-heart ${liked ? 'liked' : ''}" onclick="addLike(${map.id})">
+            ❤️ <span>${map.likes || 0}</span>
+          </button>
+        </div>
+        <button class="btn-download" onclick="handleDownload('${escapeHtml(safeUrl(map.file))}')">Pobierz mapę</button>
+        ${ownerActions}
+      </div>
+    </div>`;
+}
+
+function renderMaps(){
+  const allContainer = document.getElementById('allMapsContainer');
+  const topContainer = document.getElementById('topMapsContainer');
+  const countBadge = document.getElementById('allCount');
+
+  const approved = mapsCache.filter(m => m.approved);
+  countBadge.textContent = approved.length;
+
+  if(approved.length === 0){
+    allContainer.innerHTML = '<p class="empty-msg" style="grid-column:1/-1;">Brak zatwierdzonych map. Bądź pierwszy i dodaj swoją!</p>';
+    topContainer.innerHTML = '<p class="empty-msg" style="grid-column:1/-1;">Brak najpopularniejszych map.</p>';
+    return;
+  }
+
+  allContainer.innerHTML = approved.map(m => createCardHTML(m, null)).join('');
+
+  const sorted = [...approved].sort((a,b) => (b.likes||0) - (a.likes||0));
+  const top3 = sorted.slice(0,3);
+  topContainer.innerHTML = top3.map((m,i) => createCardHTML(m, i+1)).join('');
+
+  // stagger the entrance animation
+  document.querySelectorAll('.map-card').forEach((el, i) => {
+    el.style.animationDelay = (i % 12) * 0.04 + 's';
+  });
+
+  filterMaps();
+}
+
+function filterMaps(){
+  const query = document.getElementById('searchInput').value.toLowerCase();
+  document.querySelectorAll('#allMapsContainer .map-card').forEach(card => {
+    const title = card.getAttribute('data-title') || '';
+    card.style.display = title.includes(query) ? 'flex' : 'none';
+  });
+}
+
+/* ============================================================
+   ADMIN PANEL
+   ============================================================ */
+function onAdminClick(){
+  if(!currentUser){
+    showToast('Zaloguj się na konto z rangą ADMIN.', 'error');
+    openAuthModal('login');
+    return;
+  }
+  if(currentUser.role !== 'admin'){
+    showToast('Brak uprawnień — tylko administratorzy mają dostęp.', 'error');
+    return;
+  }
+  document.getElementById('adminPanelWrap').classList.add('open');
+  renderAdminPendingMaps();
+  renderAdminUsers();
+  document.getElementById('adminPanelWrap').scrollIntoView({behavior:'smooth', block:'start'});
+}
+function closeAdminPanel(){
+  document.getElementById('adminPanelWrap').classList.remove('open');
+}
+
+function renderAdminPendingMaps(){
+  const list = document.getElementById('pendingMapsList');
+  const pending = mapsCache.filter(m => !m.approved);
+
+  if(pending.length === 0){
+    list.innerHTML = '<p class="empty-msg">Brak map oczekujących na zatwierdzenie.</p>';
+    return;
+  }
+
+  list.innerHTML = pending.map(map => `
+    <div class="pending-item">
+      <h4>${escapeHtml(map.name)} (v${escapeHtml(map.version)})</h4>
+      <div class="pending-meta">Autor: <b>${escapeHtml(map.author)}</b></div>
+      <p class="pending-desc">${escapeHtml(map.desc)}</p>
+      <div class="pending-actions">
+        <button class="btn btn-ghost btn-sm" onclick="handleDownload('${escapeHtml(safeUrl(map.file))}')">📥 Testuj / pobierz</button>
+        <button class="btn btn-amber btn-sm" onclick="approveMap(${map.id})">Zatwierdź i opublikuj</button>
+        <button class="btn btn-danger-outline btn-sm" onclick="rejectMap(${map.id})">Odrzuć (usuń)</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderAdminUsers(){
+  const list = document.getElementById('usersList');
+  if(usersCache.length === 0){
+    list.innerHTML = '<p class="empty-msg">Brak użytkowników.</p>';
+    return;
+  }
+
+  list.innerHTML = usersCache.map(u => {
+    const isBanned = u.bannedUntil && Date.now() < u.bannedUntil;
+    const banFlag = isBanned ? `<span class="ban-flag">[BAN DO: ${new Date(u.bannedUntil).toLocaleDateString('pl-PL')}]</span>` : '';
+    const mapCount = mapsCache.filter(m => m.author === u.username).length;
+    return `
+      <div class="user-card">
+        <div class="user-card-top">
+          <div>
+            <b>${escapeHtml(u.username)}</b> (${escapeHtml(u.email || 'brak emaila')})
+            &nbsp;<span class="user-role">| Ranga: ${escapeHtml(u.role)}</span> ${banFlag}
+          </div>
+          <div class="user-stat">Dodane mapy: <b>${mapCount}</b></div>
+        </div>
+        <div class="user-bio-box">💬 ${escapeHtml(u.bio || 'Brak opisu profilu')}</div>
+        <div class="user-card-actions">
+          <button class="btn btn-ghost btn-sm" onclick="toggleAdminRole('${escapeHtml(u.username)}')">
+            ${u.role === 'admin' ? 'Zabierz admina' : 'Daj admina'}
+          </button>
+          <button class="btn btn-danger-outline btn-sm" onclick="banUser('${escapeHtml(u.username)}')">Ban na 2 dni</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function toggleAdminRole(username){
+  const idx = usersCache.findIndex(u => u.username === username);
+  if(idx === -1) return;
+  const makingAdmin = usersCache[idx].role !== 'admin';
+  const confirmed = await showConfirm(
+    makingAdmin ? `Nadać rangę ADMIN użytkownikowi „${username}”?` : `Zabrać rangę ADMIN użytkownikowi „${username}”?`
+  );
+  if(!confirmed) return;
+
+  usersCache[idx].role = makingAdmin ? 'admin' : 'user';
+  const ok = await persistUsers(usersCache);
+  if(!ok) return;
+  renderAdminUsers();
+
+  if(currentUser && currentUser.username === username){
+    currentUser.role = usersCache[idx].role;
+    updateUIUser();
+  }
+  showToast('Ranga zaktualizowana.', 'success');
+}
+
+async function banUser(username){
+  const confirmed = await showConfirm(`Zabanować użytkownika „${username}” na 2 dni?`, {danger:true, okLabel:'Zabanuj'});
+  if(!confirmed) return;
+
+  const idx = usersCache.findIndex(u => u.username === username);
+  if(idx === -1) return;
+  usersCache[idx].bannedUntil = Date.now() + (2*24*60*60*1000);
+  const ok = await persistUsers(usersCache);
+  if(!ok) return;
+  renderAdminUsers();
+  showToast(`Użytkownik ${username} został zabanowany na 2 dni.`, 'success');
+}
+
+async function approveMap(id){
+  const idx = mapsCache.findIndex(m => m.id == id);
+  if(idx === -1) return;
+  mapsCache[idx].approved = true;
+  const ok = await persistMaps(mapsCache);
+  if(!ok) return;
+  renderAdminPendingMaps();
+  renderMaps();
+  showToast('Mapa została zatwierdzona!', 'success');
+}
+
+async function rejectMap(id){
+  const confirmed = await showConfirm('Czy na pewno chcesz odrzucić i usunąć tę mapę?', {danger:true, okLabel:'Odrzuć'});
+  if(!confirmed) return;
+  mapsCache = mapsCache.filter(m => m.id != id);
+  const ok = await persistMaps(mapsCache);
+  if(!ok) return;
+  renderAdminPendingMaps();
+  renderMaps();
+  showToast('Mapa odrzucona.', 'info');
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+(async function init(){
+  try{
+    mapsCache = await ensureMaps();
+  }catch(e){
+    mapsCache = [];
+    showToast('Nie udało się wczytać map.', 'error');
+  }
+  renderMaps();
+  await initSession();
+})();
+</script>
+</body>
+</html>
